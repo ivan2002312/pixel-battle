@@ -3,27 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎮 Pixel Battle</title>
+    <title>🎮 Pixel Battle - Сервера</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background: #0a0a14;
             color: white;
+            overflow: hidden;
         }
 
         /* Меню */
         #menuContainer {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #1a1a2e, #0f0f1a);
             z-index: 1000;
             display: flex;
@@ -32,11 +25,7 @@
             overflow-y: auto;
             padding: 20px;
         }
-
-        #menuContainer.hidden {
-            display: none;
-        }
-
+        #menuContainer.hidden { display: none; }
         .menu-box {
             width: 700px;
             max-width: 100%;
@@ -47,22 +36,9 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
             backdrop-filter: blur(10px);
         }
-
-        h1 {
-            text-align: center;
-            font-size: 36px;
-            margin-bottom: 30px;
-            color: #bbbbff;
-            text-shadow: 0 0 20px #6a6aff;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 25px;
-            border-bottom: 2px solid #3a3a5a;
-        }
-
+        h1 { text-align: center; font-size: 36px; margin-bottom: 30px; color: #bbbbff; text-shadow: 0 0 20px #6a6aff; }
+        h2 { color: #bbbbff; margin-bottom: 20px; text-align: center; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 25px; border-bottom: 2px solid #3a3a5a; }
         .tab-btn {
             padding: 12px 24px;
             background: transparent;
@@ -74,26 +50,11 @@
             transition: 0.2s;
             font-weight: bold;
         }
+        .tab-btn:hover { background: #2a2a4a; color: white; }
+        .tab-btn.active { background: #4a4a7a; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        .tab-btn:hover {
-            background: #2a2a4a;
-            color: white;
-        }
-
-        .tab-btn.active {
-            background: #4a4a7a;
-            color: white;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Список серверов */
         .server-list {
             display: flex;
             flex-direction: column;
@@ -102,7 +63,6 @@
             overflow-y: auto;
             padding-right: 5px;
         }
-
         .server-item {
             background: #1e1e3a;
             border-radius: 15px;
@@ -111,24 +71,19 @@
             justify-content: space-between;
             align-items: center;
             border: 1px solid #4a4a7a;
-            transition: 0.2s;
         }
-
-        .server-item:hover {
-            background: #2a2a5a;
-            border-color: #7a7aff;
+        .server-item:hover { background: #2a2a5a; border-color: #7a7aff; }
+        .server-info h3 { margin-bottom: 5px; color: #e0e0ff; }
+        .server-info p { font-size: 14px; color: #aaccff; }
+        .server-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            margin-left: 8px;
+            background: #4a4a7a;
         }
-
-        .server-info h3 {
-            margin-bottom: 5px;
-            color: #e0e0ff;
-        }
-
-        .server-info p {
-            font-size: 14px;
-            color: #aaccff;
-        }
-
+        .server-badge.private { background: #8a4a4a; }
         .join-btn {
             padding: 10px 25px;
             background: #5a5a9a;
@@ -137,15 +92,8 @@
             border-radius: 20px;
             cursor: pointer;
             font-weight: bold;
-            transition: 0.2s;
-            font-size: 14px;
         }
-
-        .join-btn:hover {
-            background: #7a7aff;
-            transform: scale(1.05);
-        }
-
+        .join-btn:hover { background: #7a7aff; transform: scale(1.05); }
         .refresh-btn {
             margin-bottom: 15px;
             padding: 10px 20px;
@@ -154,25 +102,10 @@
             color: white;
             border-radius: 10px;
             cursor: pointer;
-            font-size: 14px;
         }
 
-        .refresh-btn:hover {
-            background: #5a5a8a;
-        }
-
-        /* Формы */
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #aaccff;
-            font-size: 14px;
-        }
-
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #aaccff; font-size: 14px; }
         .form-group input {
             width: 100%;
             padding: 12px 15px;
@@ -181,25 +114,10 @@
             border-radius: 12px;
             color: white;
             font-size: 16px;
-            outline: none;
-            transition: 0.2s;
         }
-
-        .form-group input:focus {
-            border-color: #7a7aff;
-        }
-
-        .form-group input[type="checkbox"] {
-            width: auto;
-            margin-right: 8px;
-        }
-
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-
+        .form-group input:focus { border-color: #7a7aff; outline: none; }
+        .checkbox-label { display: flex; align-items: center; cursor: pointer; }
+        .checkbox-label input { width: auto; margin-right: 8px; }
         .action-btn {
             width: 100%;
             padding: 14px;
@@ -210,20 +128,8 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: 0.2s;
-            margin-top: 10px;
         }
-
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(106, 106, 255, 0.3);
-        }
-
-        .action-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
+        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .code-display {
             background: #0a0a15;
             padding: 15px;
@@ -236,57 +142,57 @@
             margin: 15px 0;
             color: #aaffaa;
         }
-
-        .error-message {
-            color: #ff8a8a;
-            background: #3a1e1e;
-            padding: 10px 15px;
-            border-radius: 10px;
+        .copy-btn {
+            padding: 8px 16px;
+            background: #3a3a5a;
+            border: none;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .invite-link {
+            background: #0a0a15;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
             margin: 10px 0;
-            font-size: 14px;
+            border: 1px solid #4a4a7a;
         }
+        .success-message { color: #aaffaa; background: #1e3a1e; padding: 10px; border-radius: 10px; margin: 10px 0; }
+        .error-message { color: #ff8a8a; background: #3a1e1e; padding: 10px; border-radius: 10px; margin: 10px 0; }
+        .loading { text-align: center; padding: 40px; color: #888; }
 
-        .success-message {
-            color: #aaffaa;
-            background: #1e3a1e;
-            padding: 10px 15px;
-            border-radius: 10px;
-            margin: 10px 0;
-            font-size: 14px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #888;
-        }
-
-        /* Игровой контейнер */
+        /* Игра */
         #gameContainer {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: #1a1a2e;
         }
-
-        #gameContainer.hidden {
-            display: none;
-        }
-
+        #gameContainer.hidden { display: none; }
         #gameCanvas {
             display: block;
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             cursor: crosshair;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
         }
+        #gameCanvas.panning { cursor: grab; }
+        #gameCanvas.panning:active { cursor: grabbing; }
+        #gameCanvas.erasing { cursor: not-allowed; }
 
-        /* Статус бар */
-        #gameStatus {
+        #topPanel {
             position: fixed;
-            top: 15px;
-            left: 15px;
+            top: 15px; left: 15px; right: 15px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .info-badge {
             background: rgba(20, 20, 35, 0.9);
             color: #e0e0ff;
             padding: 8px 18px;
@@ -294,33 +200,69 @@
             backdrop-filter: blur(8px);
             border: 1px solid #5a5a8a;
             font-size: 14px;
-            z-index: 100;
+            pointer-events: none;
         }
-
         #backBtn {
             position: fixed;
-            top: 15px;
-            right: 15px;
-            padding: 10px 20px;
+            top: 15px; right: 80px;
+            padding: 8px 18px;
             background: rgba(100, 50, 50, 0.9);
             color: white;
             border: none;
-            border-radius: 30px;
+            border-radius: 40px;
             cursor: pointer;
             font-weight: bold;
             z-index: 100;
             backdrop-filter: blur(8px);
             border: 1px solid #ff6a6a;
+            pointer-events: auto;
         }
-
-        #backBtn:hover {
-            background: rgba(150, 50, 50, 0.9);
+        #backBtn:hover { background: rgba(150, 50, 50, 0.9); }
+        #settingsBtn {
+            position: fixed;
+            top: 15px; right: 15px;
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: rgba(40, 40, 60, 0.9);
+            backdrop-filter: blur(8px);
+            border: 2px solid #7a7aaa;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            pointer-events: auto;
         }
+        #settingsBtn:hover { background: #5a5a8a; transform: rotate(45deg); }
+        #settingsPanel {
+            position: fixed;
+            top: 80px; right: 20px;
+            width: 300px;
+            background: rgba(25, 25, 40, 0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 2px solid #6a6a9a;
+            z-index: 250;
+            display: none;
+            color: #ddd;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            pointer-events: auto;
+        }
+        #settingsPanel.active { display: block; }
+        .settings-title { font-size: 20px; margin-bottom: 20px; color: #bbbbff; text-align: center; }
+        .setting-item { margin-bottom: 15px; }
+        .setting-item label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 15px; }
+        .setting-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: #6a6aff; }
+        .setting-item input[type="color"] { width: 60px; height: 35px; border-radius: 6px; margin-left: 10px; cursor: pointer; }
+        .setting-divider { height: 1px; background: #4a4a6a; margin: 15px 0; }
 
         #coords {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: 20px; right: 20px;
             background: rgba(20, 20, 35, 0.9);
             color: #ccd6ff;
             padding: 10px 20px;
@@ -329,9 +271,47 @@
             font-size: 14px;
             border: 1px solid #5a5aff;
             z-index: 100;
+            pointer-events: none;
         }
+        #fps {
+            position: fixed;
+            bottom: 20px; left: 20px;
+            background: rgba(30, 30, 50, 0.9);
+            color: #aaffaa;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            border: 1px solid #5a9a5a;
+            z-index: 100;
+            pointer-events: none;
+        }
+        #playersCount {
+            position: fixed;
+            bottom: 20px; left: 120px;
+            background: rgba(30, 30, 50, 0.9);
+            color: #aaccff;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            border: 1px solid #5a5a9a;
+            z-index: 100;
+            pointer-events: none;
+        }
+        #eraseModeIndicator {
+            position: fixed;
+            bottom: 80px; left: 20px;
+            background: rgba(100, 30, 30, 0.9);
+            color: #ffaaaa;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            border: 1px solid #ff6a6a;
+            z-index: 100;
+            pointer-events: none;
+            display: none;
+        }
+        #eraseModeIndicator.visible { display: block; }
 
-        /* Палитра */
         #palette {
             position: fixed;
             bottom: 25px;
@@ -346,39 +326,17 @@
             border: 2px solid #6a6a9a;
             z-index: 200;
         }
-
         .color-btn {
-            width: 40px;
-            height: 40px;
+            width: 40px; height: 40px;
             border-radius: 10px;
             border: 3px solid #aaa;
             cursor: pointer;
             transition: 0.15s;
         }
-
-        .color-btn:hover {
-            transform: scale(1.15);
-            border-color: white;
-        }
-
-        .color-btn.active {
-            border: 4px solid white;
-            box-shadow: 0 0 20px currentColor;
-        }
-
-        #eraserBtn {
-            background: #333;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        #eraserBtn.active {
-            border-color: #ff6a6a;
-            box-shadow: 0 0 20px #ff6a6a;
-        }
-
+        .color-btn:hover { transform: scale(1.15); border-color: white; }
+        .color-btn.active { border: 4px solid white; box-shadow: 0 0 20px currentColor; }
+        #eraserBtn { background: #333; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        #eraserBtn.active { border-color: #ff6a6a; box-shadow: 0 0 20px #ff6a6a; }
         #customColorBtn {
             background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet);
             display: flex;
@@ -388,17 +346,41 @@
             font-size: 20px;
         }
 
-        .players-badge {
+        .click-ripple {
             position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(30, 30, 50, 0.9);
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            border: 3px solid white;
+            pointer-events: none;
+            z-index: 9999;
+            animation: clickFeedback 0.3s ease-out forwards;
+        }
+        .erase-ripple {
+            position: fixed;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            border: 3px solid #ff6a6a;
+            pointer-events: none;
+            z-index: 9999;
+            animation: clickFeedback 0.3s ease-out forwards;
+        }
+        @keyframes clickFeedback {
+            0% { opacity: 1; transform: scale(0.5); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+
+        #helpText {
+            position: fixed;
+            top: 80px; left: 20px;
+            background: rgba(20, 20, 40, 0.7);
+            backdrop-filter: blur(5px);
             color: #aaccff;
-            padding: 8px 18px;
-            border-radius: 40px;
-            font-size: 14px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
             border: 1px solid #5a5a9a;
-            z-index: 100;
+            z-index: 90;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -409,57 +391,101 @@
             <h1>🎮 Pixel Battle</h1>
             
             <div class="tabs">
-                <button class="tab-btn active" data-tab="public">🌍 Публичные сервера</button>
+                <button class="tab-btn active" data-tab="public">🌍 Публичные</button>
                 <button class="tab-btn" data-tab="create">✨ Создать</button>
-                <button class="tab-btn" data-tab="join">🔑 Войти по коду</button>
+                <button class="tab-btn" data-tab="join">🔑 Вход по коду</button>
             </div>
             
             <!-- Публичные сервера -->
             <div id="tab-public" class="tab-content active">
-                <button class="refresh-btn" id="refreshServersBtn">🔄 Обновить список</button>
+                <button class="refresh-btn" id="refreshServersBtn">🔄 Обновить</button>
                 <div class="server-list" id="serverList">
-                    <div class="loading">Загрузка серверов...</div>
+                    <div class="loading">Загрузка...</div>
                 </div>
             </div>
             
             <!-- Создание сервера -->
             <div id="tab-create" class="tab-content">
                 <div class="form-group">
-                    <label>🏷️ Название сервера</label>
+                    <label>🏷️ Название</label>
                     <input type="text" id="serverNameInput" placeholder="Мой сервер" maxlength="32" value="Pixel Battle">
                 </div>
                 <div class="form-group">
                     <label class="checkbox-label">
-                        <input type="checkbox" id="privateServerCheckbox"> 🔒 Приватный сервер (вход по коду)
+                        <input type="checkbox" id="privateServerCheckbox"> 🔒 Приватный (вход по коду/ссылке)
                     </label>
                 </div>
                 <div class="form-group">
                     <label>👥 Максимум игроков</label>
                     <input type="number" id="maxPlayersInput" value="20" min="2" max="100">
                 </div>
-                <button class="action-btn" id="createServerBtn">🚀 Создать сервер</button>
+                <button class="action-btn" id="createServerBtn">🚀 Создать</button>
                 <div id="createResult"></div>
             </div>
             
             <!-- Вход по коду -->
             <div id="tab-join" class="tab-content">
                 <div class="form-group">
-                    <label>🔑 Код доступа</label>
+                    <label>🔑 Код доступа (6 символов)</label>
                     <input type="text" id="accessCodeInput" placeholder="ABC123" maxlength="6" style="text-transform: uppercase;">
                 </div>
                 <button class="action-btn" id="joinByCodeBtn">🔗 Подключиться</button>
                 <div id="joinResult"></div>
+                <p style="color: #888; font-size: 13px; margin-top: 15px; text-align: center;">
+                    Или перейдите по ссылке-приглашению
+                </p>
             </div>
         </div>
     </div>
     
     <!-- ИГРА -->
     <div id="gameContainer" class="hidden">
-        <div id="gameStatus">🟢 Подключено</div>
-        <button id="backBtn">🚪 Выйти в меню</button>
+        <div id="topPanel">
+            <div class="info-badge" id="gameStatus">🟢 Подключено</div>
+            <div class="info-badge" id="serverNameDisplay">Pixel Battle</div>
+        </div>
+        <button id="backBtn">🚪 Выйти</button>
+        <div id="settingsBtn" title="Настройки">⚙️</div>
+        
+        <div id="settingsPanel">
+            <div class="settings-title">⚡ НАСТРОЙКИ ⚡</div>
+            <div class="setting-item">
+                <label><input type="checkbox" id="showGridCheckbox" checked> 🕸️ Сетка</label>
+            </div>
+            <div class="setting-item">
+                <label style="display: block;"><span>🎨 Цвет сетки</span>
+                <input type="color" id="gridColorPicker" value="#4a4a7a"></label>
+            </div>
+            <div class="setting-item">
+                <label style="display: block;"><span>🖼️ Цвет фона</span>
+                <input type="color" id="bgColorPicker" value="#1a1a2e"></label>
+            </div>
+            <div class="setting-divider"></div>
+            <div class="setting-item">
+                <label><input type="checkbox" id="showFPS"> 📊 FPS</label>
+            </div>
+            <div class="setting-item">
+                <label><input type="checkbox" id="clickEffectCheckbox" checked> ✨ Эффекты</label>
+            </div>
+            <div class="setting-item">
+                <label><input type="checkbox" id="eraseWithRightClickCheckbox" checked> 🗑️ ПКМ = ластик</label>
+            </div>
+        </div>
+        
         <canvas id="gameCanvas"></canvas>
-        <div id="coords">X: 500000 Y: 500000</div>
-        <div class="players-badge" id="playersCount">👥 0 игроков</div>
+        
+        <div id="helpText">
+            🖱️ ЛКМ — рисовать<br>
+            🖱️ ПКМ / Ctrl — стереть<br>
+            🖱️ СКМ — двигать<br>
+            ⚙️ — настройки
+        </div>
+        
+        <div id="coords">X: 500000 Y: 500000 | 🔍 1.0x</div>
+        <div id="fps">⚡ FPS: --</div>
+        <div id="playersCount">👥 0 игроков</div>
+        <div id="eraseModeIndicator">🗑️ Ластик</div>
+        
         <div id="palette"></div>
         <input type="color" id="customColorPicker" value="#ff0000" style="position: absolute; opacity: 0; pointer-events: none;">
     </div>
@@ -478,6 +504,7 @@
             let currentServerId = null;
             let currentPlayerId = null;
             let isConnected = false;
+            let serverInfo = null;
             
             // Игровые данные
             const pixelCache = Object.create(null);
@@ -495,10 +522,25 @@
             let currentColor = PALETTE[0];
             let isEraseMode = false;
             
+            // Настройки
+            let showGrid = true;
+            let gridColor = '#4a4a7a';
+            let bgColor = '#1a1a2e';
+            let showFPS = false;
+            let clickEffect = true;
+            let eraseWithRightClick = true;
+            let ctrlPressed = false;
+            
             // Мышь
             let mouseWorldX = camera.x, mouseWorldY = camera.y;
             let isPanning = false;
             let lastPanX = 0, lastPanY = 0;
+            
+            // FPS
+            let frameCount = 0;
+            let lastFpsUpdate = 0;
+            let fps = 60;
+            let renderScheduled = false;
             
             // UI элементы
             const menuContainer = document.getElementById('menuContainer');
@@ -506,8 +548,11 @@
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d', { alpha: false });
             const gameStatus = document.getElementById('gameStatus');
+            const serverNameDisplay = document.getElementById('serverNameDisplay');
             const coordsDiv = document.getElementById('coords');
             const playersCountDiv = document.getElementById('playersCount');
+            const fpsDiv = document.getElementById('fps');
+            const eraseIndicator = document.getElementById('eraseModeIndicator');
             
             // Инициализация меню
             const tabs = document.querySelectorAll('.tab-btn');
@@ -523,6 +568,66 @@
                 });
             });
             
+            // Настройки
+            const settingsPanel = document.getElementById('settingsPanel');
+            const settingsBtn = document.getElementById('settingsBtn');
+            const showGridCheck = document.getElementById('showGridCheckbox');
+            const gridColorPicker = document.getElementById('gridColorPicker');
+            const bgColorPicker = document.getElementById('bgColorPicker');
+            const showFpsCheck = document.getElementById('showFPS');
+            const clickEffectCheck = document.getElementById('clickEffectCheckbox');
+            const eraseWithRightClickCheck = document.getElementById('eraseWithRightClickCheckbox');
+            
+            settingsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                settingsPanel.classList.toggle('active');
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!settingsPanel.contains(e.target) && e.target !== settingsBtn) {
+                    settingsPanel.classList.remove('active');
+                }
+            });
+            
+            showGridCheck.addEventListener('change', () => { showGrid = showGridCheck.checked; requestRender(); });
+            gridColorPicker.addEventListener('input', () => { gridColor = gridColorPicker.value; if (showGrid) requestRender(); });
+            bgColorPicker.addEventListener('input', () => { bgColor = bgColorPicker.value; requestRender(); });
+            showFpsCheck.addEventListener('change', () => { showFPS = showFpsCheck.checked; fpsDiv.style.display = showFPS ? 'block' : 'none'; });
+            clickEffectCheck.addEventListener('change', () => { clickEffect = clickEffectCheck.checked; });
+            eraseWithRightClickCheck.addEventListener('change', () => { eraseWithRightClick = eraseWithRightClickCheck.checked; });
+            
+            fpsDiv.style.display = 'none';
+            
+            // Проверка URL параметров при загрузке
+            function checkUrlParams() {
+                const params = new URLSearchParams(window.location.search);
+                const serverId = params.get('server');
+                const code = params.get('code');
+                
+                if (serverId && code) {
+                    // Автоматический вход по ссылке
+                    setTimeout(() => {
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({
+                                type: 'join_server',
+                                serverId: serverId,
+                                accessCode: code
+                            }));
+                        }
+                    }, 500);
+                } else if (serverId) {
+                    // Публичный сервер по ссылке
+                    setTimeout(() => {
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({
+                                type: 'join_server',
+                                serverId: serverId
+                            }));
+                        }
+                    }, 500);
+                }
+            }
+            
             // Подключение к мастер-серверу
             function connectToMaster() {
                 if (ws) ws.close();
@@ -532,6 +637,7 @@
                 ws.onopen = () => {
                     console.log('✅ Подключено к мастер-серверу');
                     loadServerList();
+                    checkUrlParams();
                 };
                 
                 ws.onmessage = (event) => {
@@ -555,34 +661,42 @@
                             playerCount = msg.playerCount;
                             updatePlayersCount();
                         } else if (msg.type === 'server_closed') {
-                            alert('Сервер был закрыт создателем');
+                            alert('🛑 Сервер был закрыт создателем');
                             backToMenu();
+                        } else if (msg.type === 'servers_by_code') {
+                            // Ответ на поиск по коду
+                            if (msg.servers && msg.servers.length > 0) {
+                                const server = msg.servers[0];
+                                ws.send(JSON.stringify({
+                                    type: 'join_server',
+                                    serverId: server.id,
+                                    accessCode: msg.code
+                                }));
+                            } else {
+                                document.getElementById('joinResult').innerHTML = '<div class="error-message">❌ Сервер с таким кодом не найден</div>';
+                                document.getElementById('joinByCodeBtn').disabled = false;
+                                document.getElementById('joinByCodeBtn').textContent = '🔗 Подключиться';
+                            }
                         }
                     } catch (e) {
-                        console.error('Ошибка сообщения:', e);
+                        console.error('Ошибка:', e);
                     }
                 };
                 
                 ws.onclose = () => {
-                    console.log('🔌 Отключено от мастер-сервера');
-                    if (gameContainer.classList.contains('hidden') === false) {
+                    console.log('🔌 Отключено');
+                    if (!gameContainer.classList.contains('hidden')) {
                         gameStatus.textContent = '🔴 Отключено';
                     }
                 };
-                
-                ws.onerror = (e) => {
-                    console.error('WebSocket ошибка:', e);
-                };
             }
             
-            // Загрузка списка серверов
             function loadServerList() {
                 if (ws && ws.readyState === WebSocket.OPEN) {
                     ws.send(JSON.stringify({ type: 'get_servers' }));
                 }
             }
             
-            // Отображение списка серверов
             function displayServerList(servers) {
                 const container = document.getElementById('serverList');
                 
@@ -594,20 +708,39 @@
                 container.innerHTML = servers.map(s => `
                     <div class="server-item">
                         <div class="server-info">
-                            <h3>${escapeHtml(s.name)}</h3>
-                            <p>👥 ${s.players}/${s.maxPlayers} | 🎨 ${s.pixels} пикс.</p>
+                            <h3>
+                                ${escapeHtml(s.name)}
+                                ${s.isPrivate ? '<span class="server-badge private">🔒 Приватный</span>' : '<span class="server-badge">🌍 Публичный</span>'}
+                            </h3>
+                            <p>👥 ${s.players}/${s.maxPlayers} | 🎨 ${s.pixels || 0} пикс.</p>
                         </div>
-                        <button class="join-btn" onclick="joinServer('${s.id}')">Подключиться</button>
+                        <button class="join-btn" onclick="window.joinServerById('${s.id}', ${s.isPrivate})">
+                            ${s.isPrivate ? '🔑 Войти' : 'Подключиться'}
+                        </button>
                     </div>
                 `).join('');
             }
             
-            window.joinServer = function(serverId) {
-                if (ws && ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({
-                        type: 'join_server',
-                        serverId: serverId
-                    }));
+            window.joinServerById = function(serverId, isPrivate) {
+                if (isPrivate) {
+                    // Для приватного - запрашиваем код
+                    const code = prompt('🔑 Введите код доступа к приватному серверу:');
+                    if (!code) return;
+                    
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: 'join_server',
+                            serverId: serverId,
+                            accessCode: code.toUpperCase()
+                        }));
+                    }
+                } else {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: 'join_server',
+                            serverId: serverId
+                        }));
+                    }
                 }
             };
             
@@ -633,107 +766,145 @@
             function showCreateSuccess(msg) {
                 const resultDiv = document.getElementById('createResult');
                 const code = msg.accessCode;
+                const serverId = msg.serverId;
+                const baseUrl = window.location.origin + window.location.pathname;
                 
                 if (code) {
+                    const inviteLink = `${baseUrl}?server=${serverId}&code=${code}`;
                     resultDiv.innerHTML = `
-                        <div class="success-message">✅ Сервер создан!</div>
-                        <div class="code-display">${code}</div>
-                        <p style="color: #aaccff; text-align: center; margin-bottom: 15px;">
-                            Отправьте этот код друзьям для входа
+                        <div class="success-message">✅ Приватный сервер создан!</div>
+                        <div class="code-display">
+                            ${code}
+                            <button class="copy-btn" onclick="navigator.clipboard.writeText('${code}')">📋 Код</button>
+                        </div>
+                        <div class="invite-link">
+                            🔗 ${inviteLink}
+                            <button class="copy-btn" onclick="navigator.clipboard.writeText('${inviteLink}')" style="margin-top: 5px;">📋 Ссылка</button>
+                        </div>
+                        <p style="color: #aaccff; margin: 15px 0; font-size: 13px;">
+                            Отправьте код или ссылку друзьям для входа
                         </p>
-                        <button class="action-btn" onclick="joinServer('${msg.serverId}')">🎮 Войти в игру</button>
+                        <button class="action-btn" onclick="window.joinServerById('${serverId}', true)">🎮 Войти в игру</button>
                     `;
                 } else {
+                    const inviteLink = `${baseUrl}?server=${serverId}`;
                     resultDiv.innerHTML = `
                         <div class="success-message">✅ Публичный сервер создан!</div>
-                        <button class="action-btn" onclick="joinServer('${msg.serverId}')">🎮 Войти в игру</button>
+                        <div class="invite-link">
+                            🔗 ${inviteLink}
+                            <button class="copy-btn" onclick="navigator.clipboard.writeText('${inviteLink}')">📋 Копировать</button>
+                        </div>
+                        <button class="action-btn" onclick="window.joinServerById('${serverId}', false)">🎮 Войти в игру</button>
                     `;
                 }
                 
                 document.getElementById('createServerBtn').disabled = false;
-                document.getElementById('createServerBtn').textContent = '🚀 Создать сервер';
+                document.getElementById('createServerBtn').textContent = '🚀 Создать';
             }
             
             // Вход по коду
             document.getElementById('joinByCodeBtn').addEventListener('click', () => {
                 const code = document.getElementById('accessCodeInput').value.trim().toUpperCase();
                 
-                if (!code) {
+                if (!code || code.length < 3) {
                     document.getElementById('joinResult').innerHTML = '<div class="error-message">Введите код доступа</div>';
                     return;
                 }
                 
-                // TODO: Нужен эндпоинт для поиска сервера по коду
-                document.getElementById('joinResult').innerHTML = '<div class="error-message">Функция в разработке</div>';
+                document.getElementById('joinByCodeBtn').disabled = true;
+                document.getElementById('joinByCodeBtn').textContent = '⏳ Поиск...';
+                
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'find_server_by_code',
+                        code: code
+                    }));
+                }
             });
             
-            // Обновление списка
             document.getElementById('refreshServersBtn').addEventListener('click', loadServerList);
             
-            // Показ ошибки
             function showError(message) {
                 alert('❌ ' + message);
                 document.getElementById('createServerBtn').disabled = false;
-                document.getElementById('createServerBtn').textContent = '🚀 Создать сервер';
+                document.getElementById('createServerBtn').textContent = '🚀 Создать';
+                document.getElementById('joinByCodeBtn').disabled = false;
+                document.getElementById('joinByCodeBtn').textContent = '🔗 Подключиться';
             }
             
             // Запуск игры
             function startGame(msg) {
                 currentServerId = msg.serverId;
                 currentPlayerId = msg.playerId;
+                serverInfo = msg.serverInfo;
                 playerCount = msg.serverInfo.players;
                 
-                // Очищаем кеш пикселей
+                // Очищаем кеш
                 for (let key in pixelCache) delete pixelCache[key];
                 
                 // Загружаем пиксели
-                msg.pixels.forEach(item => {
-                    const [x, y, color] = item.split(':');
-                    if (color && color !== 'null') {
-                        pixelCache[x + ':' + y] = color;
-                    }
-                });
+                if (msg.pixels) {
+                    msg.pixels.forEach(item => {
+                        const parts = item.split(':');
+                        if (parts.length >= 3) {
+                            const x = parts[0], y = parts[1], color = parts[2];
+                            if (color && color !== 'null' && color !== 'undefined') {
+                                pixelCache[x + ':' + y] = color;
+                            }
+                        }
+                    });
+                }
                 
                 // Переключаем интерфейс
                 menuContainer.classList.add('hidden');
                 gameContainer.classList.remove('hidden');
                 
-                gameStatus.textContent = `🟢 ${escapeHtml(msg.serverInfo.name)} | ${playerCount} игроков`;
+                gameStatus.textContent = `🟢 ${playerCount} игроков`;
+                serverNameDisplay.textContent = escapeHtml(serverInfo.name);
                 updatePlayersCount();
                 
-                // Инициализация игры
                 initGame();
             }
             
-            // Инициализация игры
             function initGame() {
                 resizeCanvas();
                 buildPalette();
                 
                 window.addEventListener('resize', resizeCanvas);
+                window.addEventListener('keydown', onKeyDown);
+                window.addEventListener('keyup', onKeyUp);
                 canvas.addEventListener('mousemove', onMouseMove);
                 canvas.addEventListener('mousedown', onMouseDown);
                 canvas.addEventListener('mouseup', onMouseUp);
                 canvas.addEventListener('wheel', onWheel, { passive: false });
                 canvas.addEventListener('contextmenu', e => e.preventDefault());
                 
-                render();
+                requestRender();
             }
             
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
-                render();
+                requestRender();
+            }
+            
+            function requestRender() {
+                if (!renderScheduled) {
+                    renderScheduled = true;
+                    requestAnimationFrame(() => {
+                        render();
+                        renderScheduled = false;
+                    });
+                }
             }
             
             function render() {
                 if (canvas.width === 0) return;
                 
-                ctx.fillStyle = '#1a1a2e';
+                ctx.fillStyle = bgColor;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
-                const w = canvas.width;
-                const h = canvas.height;
+                const w = canvas.width, h = canvas.height;
                 const worldWidth = w / camera.zoom;
                 const worldHeight = h / camera.zoom;
                 
@@ -769,20 +940,71 @@
                     }
                 }
                 
+                if (showGrid) {
+                    drawGrid(tileStartX, tileEndX, tileStartY, tileEndY);
+                }
+                
+                // FPS
+                frameCount++;
+                const now = performance.now();
+                if (now - lastFpsUpdate >= 500) {
+                    fps = Math.round(frameCount * 1000 / (now - lastFpsUpdate));
+                    frameCount = 0;
+                    lastFpsUpdate = now;
+                    if (showFPS) {
+                        fpsDiv.style.color = fps > 50 ? '#aaffaa' : (fps > 30 ? '#ffd700' : '#ff8a8a');
+                        fpsDiv.textContent = `⚡ FPS: ${fps}`;
+                    }
+                }
+                
                 updateCoordsLabel();
+            }
+            
+            function drawGrid(startX, endX, startY, endY) {
+                if (camera.zoom < 0.5) return;
+                
+                ctx.beginPath();
+                ctx.strokeStyle = gridColor;
+                ctx.lineWidth = Math.max(0.5, 1 / camera.zoom);
+                
+                const step = PIXEL_SIZE;
+                const camX = camera.x;
+                const camY = camera.y;
+                const halfW = canvas.width / 2;
+                const halfH = canvas.height / 2;
+                
+                const firstX = Math.floor(startX / step) * step;
+                const firstY = Math.floor(startY / step) * step;
+                
+                for (let x = firstX; x <= endX * step; x += step) {
+                    const screenX = (x - camX) * camera.zoom + halfW;
+                    if (screenX >= 0 && screenX <= canvas.width) {
+                        ctx.moveTo(screenX, 0);
+                        ctx.lineTo(screenX, canvas.height);
+                    }
+                }
+                
+                for (let y = firstY; y <= endY * step; y += step) {
+                    const screenY = (y - camY) * camera.zoom + halfH;
+                    if (screenY >= 0 && screenY <= canvas.height) {
+                        ctx.moveTo(0, screenY);
+                        ctx.lineTo(canvas.width, screenY);
+                    }
+                }
+                ctx.stroke();
             }
             
             function handlePixelUpdate(msg) {
                 const key = msg.x + ':' + msg.y;
-                if (msg.color === null) {
+                if (msg.color === null || msg.color === 'null') {
                     delete pixelCache[key];
                 } else {
                     pixelCache[key] = msg.color;
                 }
-                render();
+                requestRender();
             }
             
-            function placePixel() {
+            function placePixel(isErase = false) {
                 if (!currentServerId) return;
                 
                 const tileX = Math.floor(mouseWorldX / PIXEL_SIZE);
@@ -790,7 +1012,7 @@
                 
                 if (tileX < 0 || tileX >= MAP_SIZE || tileY < 0 || tileY >= MAP_SIZE) return;
                 
-                const color = isEraseMode ? null : currentColor;
+                const color = isErase ? null : currentColor;
                 const key = tileX + ':' + tileY;
                 
                 if (color === null) {
@@ -798,7 +1020,7 @@
                 } else {
                     pixelCache[key] = color;
                 }
-                render();
+                requestRender();
                 
                 if (ws && ws.readyState === WebSocket.OPEN) {
                     ws.send(JSON.stringify({
@@ -807,6 +1029,39 @@
                         y: tileY,
                         color: color
                     }));
+                }
+                
+                // Эффект
+                if (clickEffect) {
+                    const rect = canvas.getBoundingClientRect();
+                    const screenX = (tileX * PIXEL_SIZE - camera.x) * camera.zoom + canvas.width / 2;
+                    const screenY = (tileY * PIXEL_SIZE - camera.y) * camera.zoom + canvas.height / 2;
+                    
+                    const ripple = document.createElement('div');
+                    ripple.className = isErase ? 'erase-ripple' : 'click-ripple';
+                    ripple.style.left = (rect.left + screenX) + 'px';
+                    ripple.style.top = (rect.top + screenY) + 'px';
+                    if (!isErase) ripple.style.borderColor = currentColor;
+                    document.body.appendChild(ripple);
+                    setTimeout(() => ripple.remove(), 300);
+                }
+            }
+            
+            function onKeyDown(e) {
+                if (e.key === 'Control') {
+                    ctrlPressed = true;
+                    canvas.classList.add('erasing');
+                    eraseIndicator.classList.add('visible');
+                }
+            }
+            
+            function onKeyUp(e) {
+                if (e.key === 'Control') {
+                    ctrlPressed = false;
+                    if (!isEraseMode) {
+                        canvas.classList.remove('erasing');
+                        eraseIndicator.classList.remove('visible');
+                    }
                 }
             }
             
@@ -830,18 +1085,24 @@
                     camera.y -= dy;
                     lastPanX = e.clientX;
                     lastPanY = e.clientY;
-                    render();
+                    requestRender();
                 }
             }
             
             function onMouseDown(e) {
                 if (e.button === 0) {
-                    placePixel();
+                    const shouldErase = isEraseMode || ctrlPressed;
+                    placePixel(shouldErase);
+                } else if (e.button === 2) {
+                    if (eraseWithRightClick) {
+                        placePixel(true);
+                    }
+                    e.preventDefault();
                 } else if (e.button === 1) {
                     isPanning = true;
                     lastPanX = e.clientX;
                     lastPanY = e.clientY;
-                    canvas.style.cursor = 'grabbing';
+                    canvas.classList.add('panning');
                     e.preventDefault();
                 }
             }
@@ -849,7 +1110,7 @@
             function onMouseUp(e) {
                 if (e.button === 1) {
                     isPanning = false;
-                    canvas.style.cursor = 'crosshair';
+                    canvas.classList.remove('panning');
                     e.preventDefault();
                 }
             }
@@ -871,17 +1132,20 @@
                 
                 camera.x += beforeX - afterX;
                 camera.y += beforeY - afterY;
-                render();
+                requestRender();
             }
             
             function updateCoordsLabel() {
                 const tileX = Math.floor(mouseWorldX / PIXEL_SIZE);
                 const tileY = Math.floor(mouseWorldY / PIXEL_SIZE);
-                coordsDiv.textContent = `X: ${tileX} Y: ${tileY} | 🔍 ${camera.zoom.toFixed(1)}x`;
+                coordsDiv.innerHTML = `X: ${tileX} Y: ${tileY} | 🔍 ${camera.zoom.toFixed(1)}x`;
             }
             
             function updatePlayersCount() {
                 playersCountDiv.textContent = `👥 ${playerCount} ${playerCount === 1 ? 'игрок' : (playerCount < 5 ? 'игрока' : 'игроков')}`;
+                if (serverInfo) {
+                    gameStatus.textContent = `🟢 ${playerCount}/${serverInfo.maxPlayers} игроков`;
+                }
             }
             
             function buildPalette() {
@@ -898,6 +1162,8 @@
                         document.getElementById('eraserBtn')?.classList.remove('active');
                         isEraseMode = false;
                         currentColor = color;
+                        canvas.classList.remove('erasing');
+                        eraseIndicator.classList.remove('visible');
                     });
                     container.appendChild(btn);
                 });
@@ -907,9 +1173,24 @@
                 eraserBtn.className = 'color-btn';
                 eraserBtn.innerHTML = '🗑️';
                 eraserBtn.addEventListener('click', () => {
+                    const wasActive = eraserBtn.classList.contains('active');
                     document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
-                    eraserBtn.classList.add('active');
-                    isEraseMode = true;
+                    
+                    if (!wasActive) {
+                        eraserBtn.classList.add('active');
+                        isEraseMode = true;
+                        canvas.classList.add('erasing');
+                        eraseIndicator.classList.add('visible');
+                    } else {
+                        isEraseMode = false;
+                        canvas.classList.remove('erasing');
+                        eraseIndicator.classList.remove('visible');
+                        const firstColor = container.querySelector('.color-btn');
+                        if (firstColor) {
+                            firstColor.classList.add('active');
+                            currentColor = PALETTE[0];
+                        }
+                    }
                 });
                 container.appendChild(eraserBtn);
                 
@@ -926,6 +1207,9 @@
                     currentColor = e.target.value;
                     isEraseMode = false;
                     document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                    document.getElementById('eraserBtn')?.classList.remove('active');
+                    canvas.classList.remove('erasing');
+                    eraseIndicator.classList.remove('visible');
                 });
             }
             
@@ -936,9 +1220,13 @@
                 
                 currentServerId = null;
                 currentPlayerId = null;
+                serverInfo = null;
                 gameContainer.classList.add('hidden');
                 menuContainer.classList.remove('hidden');
                 loadServerList();
+                
+                // Очищаем URL
+                window.history.replaceState({}, document.title, window.location.pathname);
             }
             
             document.getElementById('backBtn').addEventListener('click', backToMenu);
@@ -952,7 +1240,6 @@
             // Запуск
             connectToMaster();
             
-            // Периодическое обновление списка серверов
             setInterval(() => {
                 if (menuContainer.classList.contains('hidden') === false) {
                     loadServerList();
