@@ -2,12 +2,12 @@ const WebSocket = require('ws');
 const http = require('http');
 const crypto = require('crypto');
 
-// Railway назначает порт через process.env.PORT
 const PORT = process.env.PORT || 3000;
 
 // Хранилище серверов
 const servers = new Map();
 const publicServers = new Map();
+const serversByCode = new Map(); // code -> serverId (для быстрого поиска)
 
 function generateId() {
     return crypto.randomBytes(8).toString('hex');
@@ -17,7 +17,7 @@ function generateAccessCode() {
     return crypto.randomBytes(3).toString('hex').toUpperCase();
 }
 
-// HTTP сервер (ОБЯЗАТЕЛЬНО для Railway health-check)
+// HTTP сервер
 const server = http.createServer((req, res) => {
     // Health-check для Railway
     if (req.url === '/health') {
@@ -42,12 +42,13 @@ const server = http.createServer((req, res) => {
         const publicList = Array.from(publicServers.values()).map(s => ({
             id: s.info.id,
             name: s.info.name,
+            isPrivate: s.info.isPrivate,
             players: s.info.players,
             maxPlayers: s.info.maxPlayers,
             pixels: s.info.pixels,
             createdAt: s.info.createdAt
         }));
-        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify(publicList));
         return;
     }
@@ -60,26 +61,18 @@ const server = http.createServer((req, res) => {
         <head>
             <title>Pixel Battle Master Server</title>
             <style>
-                body { 
-                    background: #1a1a2e; 
-                    color: #e0e0ff; 
-                    font-family: Arial; 
-                    display: flex; 
-                    justify-content: center; 
-                    align-items: center; 
-                    height: 100vh; 
-                    margin: 0;
-                }
+                body { background: #1a1a2e; color: #e0e0ff; font-family: Arial; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
                 .container { text-align: center; }
                 h1 { color: #bbbbff; }
                 .status { color: #aaffaa; }
+                a { color: #aaccff; }
             </style>
         </head>
         <body>
             <div class="container">
                 <h1>🎮 Pixel Battle Master Server</h1>
                 <p class="status">✅ Сервер работает</p>
-                <p>📊 <a href="/stats" style="color: #aaccff;">Статистика</a> | <a href="/servers" style="color: #aaccff;">Список серверов</a></p>
+                <p>📊 <a href="/stats">Статистика</a> | <a href="/servers">Список серверов</a></p>
                 <p>🔌 WebSocket: wss://${req.headers.host}</p>
             </div>
         </body>
@@ -125,6 +118,9 @@ wss.on('connection', (ws) => {
                 
                 if (!serverInfo.isPrivate) {
                     publicServers.set(serverId, servers.get(serverId));
+                } else if (accessCode) {
+                    // Сохраняем приватный сервер для поиска по коду
+                    serversByCode.set(accessCode, serverId);
                 }
                 
                 isServer = true;
@@ -137,7 +133,7 @@ wss.on('connection', (ws) => {
                     serverInfo: serverInfo
                 }));
                 
-                console.log(`🆕 Сервер создан: ${serverInfo.name} (${serverId})`);
+                console.log(`🆕 Сервер создан: ${serverInfo.name} (${serverId}) ${accessCode ? '🔒 ' + accessCode : '🌍 публичный'}`);
                 broadcastServerList();
             }
             
@@ -146,6 +142,7 @@ wss.on('connection', (ws) => {
                 const publicList = Array.from(publicServers.values()).map(s => ({
                     id: s.info.id,
                     name: s.info.name,
+                    isPrivate: s.info.isPrivate,
                     players: s.info.players,
                     maxPlayers: s.info.maxPlayers,
                     pixels: s.info.pixels
@@ -154,6 +151,33 @@ wss.on('connection', (ws) => {
                     type: 'servers_list',
                     servers: publicList
                 }));
+            }
+            
+            // Поиск сервера по коду
+            else if (data.type === 'find_server_by_code') {
+                const code = data.code;
+                const serverId = serversByCode.get(code);
+                
+                if (serverId && servers.has(serverId)) {
+                    const server = servers.get(serverId);
+                    ws.send(JSON.stringify({
+                        type: 'servers_by_code',
+                        code: code,
+                        servers: [{
+                            id: server.info.id,
+                            name: server.info.name,
+                            isPrivate: server.info.isPrivate,
+                            players: server.info.players,
+                            maxPlayers: server.info.maxPlayers
+                        }]
+                    }));
+                } else {
+                    ws.send(JSON.stringify({
+                        type: 'servers_by_code',
+                        code: code,
+                        servers: []
+                    }));
+                }
             }
             
             // Подключение к серверу
@@ -210,7 +234,7 @@ wss.on('connection', (ws) => {
                 const { x, y, color } = data;
                 const key = `${x}:${y}`;
                 
-                if (color === null) {
+                if (color === null || color === 'null') {
                     server.pixels.delete(key);
                 } else {
                     server.pixels.set(key, color);
@@ -242,6 +266,11 @@ wss.on('connection', (ws) => {
         if (isServer && currentServerId) {
             const server = servers.get(currentServerId);
             if (server) {
+                // Удаляем из поиска по коду
+                if (server.info.accessCode) {
+                    serversByCode.delete(server.info.accessCode);
+                }
+                
                 server.players.forEach((playerWs) => {
                     if (playerWs.readyState === WebSocket.OPEN) {
                         playerWs.send(JSON.stringify({ type: 'server_closed' }));
@@ -289,6 +318,7 @@ function broadcastServerList() {
     const publicList = Array.from(publicServers.values()).map(s => ({
         id: s.info.id,
         name: s.info.name,
+        isPrivate: s.info.isPrivate,
         players: s.info.players,
         maxPlayers: s.info.maxPlayers,
         pixels: s.info.pixels
@@ -304,24 +334,14 @@ function broadcastServerList() {
     });
 }
 
-// Запуск сервера
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🎮 Мастер-сервер запущен на порту ${PORT}`);
     console.log(`📊 Статистика: http://localhost:${PORT}/stats`);
     console.log(`💚 Health-check: http://localhost:${PORT}/health`);
 });
 
-// Обработка сигналов завершения
 process.on('SIGTERM', () => {
     console.log('🛑 Получен SIGTERM, закрываем сервер...');
-    server.close(() => {
-        console.log('✅ Сервер остановлен');
-        process.exit(0);
-    });
-});
-
-process.on('SIGINT', () => {
-    console.log('🛑 Получен SIGINT, закрываем сервер...');
     server.close(() => {
         console.log('✅ Сервер остановлен');
         process.exit(0);
