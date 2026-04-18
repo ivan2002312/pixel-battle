@@ -3,78 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌍 Pixel Battle - Сервера</title>
+    <title>🎮 Pixel Battle</title>
     <style>
-        /* Стили для меню выбора сервера */
-        #serverMenu {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0a0a14;
+            color: white;
+        }
+
+        /* Меню */
+        #menuContainer {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(10, 10, 20, 0.95);
+            background: linear-gradient(135deg, #1a1a2e, #0f0f1a);
             z-index: 1000;
             display: flex;
             justify-content: center;
             align-items: center;
-            backdrop-filter: blur(10px);
+            overflow-y: auto;
+            padding: 20px;
         }
-        
-        .menu-container {
-            width: 800px;
-            max-width: 90%;
-            max-height: 80vh;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+
+        #menuContainer.hidden {
+            display: none;
+        }
+
+        .menu-box {
+            width: 700px;
+            max-width: 100%;
+            background: rgba(30, 30, 50, 0.95);
             border-radius: 30px;
             padding: 30px;
             border: 2px solid #5a5a8a;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            overflow-y: auto;
-            color: white;
+            backdrop-filter: blur(10px);
         }
-        
-        .menu-title {
-            font-size: 32px;
+
+        h1 {
             text-align: center;
+            font-size: 36px;
             margin-bottom: 30px;
             color: #bbbbff;
             text-shadow: 0 0 20px #6a6aff;
         }
-        
+
         .tabs {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 5px;
+            margin-bottom: 25px;
             border-bottom: 2px solid #3a3a5a;
         }
-        
-        .tab {
+
+        .tab-btn {
             padding: 12px 24px;
             background: transparent;
             border: none;
             color: #aaa;
-            font-size: 18px;
+            font-size: 16px;
             cursor: pointer;
-            transition: 0.3s;
             border-radius: 10px 10px 0 0;
+            transition: 0.2s;
+            font-weight: bold;
         }
-        
-        .tab:hover {
+
+        .tab-btn:hover {
             background: #2a2a4a;
             color: white;
         }
-        
-        .tab.active {
-            background: #3a3a6a;
+
+        .tab-btn.active {
+            background: #4a4a7a;
             color: white;
         }
-        
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Список серверов */
         .server-list {
             display: flex;
             flex-direction: column;
             gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 5px;
         }
-        
+
         .server-item {
             background: #1e1e3a;
             border-radius: 15px;
@@ -85,27 +113,22 @@
             border: 1px solid #4a4a7a;
             transition: 0.2s;
         }
-        
+
         .server-item:hover {
             background: #2a2a5a;
             border-color: #7a7aff;
         }
-        
-        .server-info {
-            flex: 1;
-        }
-        
-        .server-name {
-            font-size: 18px;
-            font-weight: bold;
+
+        .server-info h3 {
             margin-bottom: 5px;
+            color: #e0e0ff;
         }
-        
-        .server-stats {
+
+        .server-info p {
             font-size: 14px;
             color: #aaccff;
         }
-        
+
         .join-btn {
             padding: 10px 25px;
             background: #5a5a9a;
@@ -115,151 +138,827 @@
             cursor: pointer;
             font-weight: bold;
             transition: 0.2s;
+            font-size: 14px;
         }
-        
+
         .join-btn:hover {
             background: #7a7aff;
             transform: scale(1.05);
         }
-        
-        .create-form {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+
+        .refresh-btn {
+            margin-bottom: 15px;
+            padding: 10px 20px;
+            background: #3a3a5a;
+            border: none;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
         }
-        
+
+        .refresh-btn:hover {
+            background: #5a5a8a;
+        }
+
+        /* Формы */
         .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            margin-bottom: 20px;
         }
-        
+
         .form-group label {
+            display: block;
+            margin-bottom: 8px;
             color: #aaccff;
             font-size: 14px;
         }
-        
+
         .form-group input {
-            padding: 12px;
+            width: 100%;
+            padding: 12px 15px;
             background: #1a1a2e;
             border: 2px solid #3a3a5a;
-            border-radius: 10px;
+            border-radius: 12px;
             color: white;
             font-size: 16px;
-        }
-        
-        .form-group input:focus {
             outline: none;
+            transition: 0.2s;
+        }
+
+        .form-group input:focus {
             border-color: #7a7aff;
         }
-        
-        .create-btn {
-            padding: 15px;
+
+        .form-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 14px;
             background: linear-gradient(135deg, #6a6aff, #4a4aaa);
             border: none;
             color: white;
             border-radius: 15px;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: 0.3s;
+            transition: 0.2s;
+            margin-top: 10px;
         }
-        
-        .create-btn:hover {
+
+        .action-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 30px rgba(106, 106, 255, 0.3);
         }
-        
-        .access-code-display {
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .code-display {
             background: #0a0a15;
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 12px;
             text-align: center;
             font-family: monospace;
-            font-size: 24px;
-            letter-spacing: 4px;
+            font-size: 28px;
+            letter-spacing: 6px;
             border: 2px dashed #6a6aff;
-            margin-top: 10px;
+            margin: 15px 0;
+            color: #aaffaa;
         }
-        
-        .hidden {
-            display: none !important;
+
+        .error-message {
+            color: #ff8a8a;
+            background: #3a1e1e;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-size: 14px;
         }
-        
+
+        .success-message {
+            color: #aaffaa;
+            background: #1e3a1e;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        /* Игровой контейнер */
+        #gameContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a2e;
+        }
+
         #gameContainer.hidden {
             display: none;
         }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        /* Статус бар */
+        #gameStatus {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background: rgba(20, 20, 35, 0.9);
+            color: #e0e0ff;
+            padding: 8px 18px;
+            border-radius: 40px;
+            backdrop-filter: blur(8px);
+            border: 1px solid #5a5a8a;
+            font-size: 14px;
+            z-index: 100;
+        }
+
+        #backBtn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            padding: 10px 20px;
+            background: rgba(100, 50, 50, 0.9);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            border: 1px solid #ff6a6a;
+        }
+
+        #backBtn:hover {
+            background: rgba(150, 50, 50, 0.9);
+        }
+
+        #coords {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(20, 20, 35, 0.9);
+            color: #ccd6ff;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-family: monospace;
+            font-size: 14px;
+            border: 1px solid #5a5aff;
+            z-index: 100;
+        }
+
+        /* Палитра */
+        #palette {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            background: rgba(25, 25, 45, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 60px;
+            border: 2px solid #6a6a9a;
+            z-index: 200;
+        }
+
+        .color-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 3px solid #aaa;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        .color-btn:hover {
+            transform: scale(1.15);
+            border-color: white;
+        }
+
+        .color-btn.active {
+            border: 4px solid white;
+            box-shadow: 0 0 20px currentColor;
+        }
+
+        #eraserBtn {
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        #eraserBtn.active {
+            border-color: #ff6a6a;
+            box-shadow: 0 0 20px #ff6a6a;
+        }
+
+        #customColorBtn {
+            background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .players-badge {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(30, 30, 50, 0.9);
+            color: #aaccff;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 14px;
+            border: 1px solid #5a5a9a;
+            z-index: 100;
+        }
     </style>
-    <!-- Остальные стили из предыдущей версии -->
 </head>
 <body>
-    <!-- Меню выбора сервера -->
-    <div id="serverMenu">
-        <div class="menu-container">
-            <div class="menu-title">🎮 Pixel Battle</div>
+    <!-- МЕНЮ -->
+    <div id="menuContainer">
+        <div class="menu-box">
+            <h1>🎮 Pixel Battle</h1>
             
             <div class="tabs">
-                <button class="tab active" data-tab="public">🌍 Публичные сервера</button>
-                <button class="tab" data-tab="create">✨ Создать сервер</button>
-                <button class="tab" data-tab="join">🔑 Приватный сервер</button>
+                <button class="tab-btn active" data-tab="public">🌍 Публичные сервера</button>
+                <button class="tab-btn" data-tab="create">✨ Создать</button>
+                <button class="tab-btn" data-tab="join">🔑 Войти по коду</button>
             </div>
             
             <!-- Публичные сервера -->
-            <div id="publicServersTab" class="tab-content">
+            <div id="tab-public" class="tab-content active">
+                <button class="refresh-btn" id="refreshServersBtn">🔄 Обновить список</button>
                 <div class="server-list" id="serverList">
-                    <div style="text-align: center; padding: 40px; color: #888;">
-                        Загрузка серверов...
-                    </div>
+                    <div class="loading">Загрузка серверов...</div>
                 </div>
             </div>
             
             <!-- Создание сервера -->
-            <div id="createServerTab" class="tab-content hidden">
-                <div class="create-form">
-                    <div class="form-group">
-                        <label>🏷️ Название сервера</label>
-                        <input type="text" id="serverName" placeholder="Мой сервер" maxlength="32">
-                    </div>
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="isPrivateServer"> 🔒 Приватный сервер
-                        </label>
-                    </div>
-                    <div class="form-group">
-                        <label>👥 Максимум игроков</label>
-                        <input type="number" id="maxPlayers" value="50" min="2" max="100">
-                    </div>
-                    <button class="create-btn" id="createServerBtn">🚀 Создать сервер</button>
-                    
-                    <div id="serverCreatedInfo" class="hidden">
-                        <div class="access-code-display" id="accessCodeDisplay"></div>
-                        <p style="color: #aaffaa; text-align: center; margin-top: 10px;">
-                            ✅ Сервер создан! Отправьте код друзьям для входа.
-                        </p>
-                    </div>
+            <div id="tab-create" class="tab-content">
+                <div class="form-group">
+                    <label>🏷️ Название сервера</label>
+                    <input type="text" id="serverNameInput" placeholder="Мой сервер" maxlength="32" value="Pixel Battle">
                 </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="privateServerCheckbox"> 🔒 Приватный сервер (вход по коду)
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>👥 Максимум игроков</label>
+                    <input type="number" id="maxPlayersInput" value="20" min="2" max="100">
+                </div>
+                <button class="action-btn" id="createServerBtn">🚀 Создать сервер</button>
+                <div id="createResult"></div>
             </div>
             
-            <!-- Подключение к приватному серверу -->
-            <div id="joinServerTab" class="tab-content hidden">
-                <div class="create-form">
-                    <div class="form-group">
-                        <label>🔑 Код доступа</label>
-                        <input type="text" id="accessCodeInput" placeholder="Введите код" maxlength="6" style="text-transform: uppercase;">
-                    </div>
-                    <button class="create-btn" id="joinPrivateBtn">🔗 Подключиться</button>
+            <!-- Вход по коду -->
+            <div id="tab-join" class="tab-content">
+                <div class="form-group">
+                    <label>🔑 Код доступа</label>
+                    <input type="text" id="accessCodeInput" placeholder="ABC123" maxlength="6" style="text-transform: uppercase;">
                 </div>
+                <button class="action-btn" id="joinByCodeBtn">🔗 Подключиться</button>
+                <div id="joinResult"></div>
             </div>
         </div>
     </div>
     
-    <!-- Игровой контейнер (скрыт до подключения) -->
+    <!-- ИГРА -->
     <div id="gameContainer" class="hidden">
-        <!-- Весь игровой интерфейс из предыдущей версии -->
+        <div id="gameStatus">🟢 Подключено</div>
+        <button id="backBtn">🚪 Выйти в меню</button>
+        <canvas id="gameCanvas"></canvas>
+        <div id="coords">X: 500000 Y: 500000</div>
+        <div class="players-badge" id="playersCount">👥 0 игроков</div>
+        <div id="palette"></div>
+        <input type="color" id="customColorPicker" value="#ff0000" style="position: absolute; opacity: 0; pointer-events: none;">
     </div>
-    
+
     <script>
-        // Код клиента с поддержкой серверов
+        (function(){
+            "use strict";
+            
+            // КОНФИГУРАЦИЯ
+            const MASTER_SERVER_URL = 'wss://pixel-battle-production.up.railway.app';
+            const MAP_SIZE = 1000000;
+            const PIXEL_SIZE = 10;
+            
+            // Состояние
+            let ws = null;
+            let currentServerId = null;
+            let currentPlayerId = null;
+            let isConnected = false;
+            
+            // Игровые данные
+            const pixelCache = Object.create(null);
+            let playerCount = 0;
+            
+            // Камера
+            let camera = {
+                x: (MAP_SIZE * PIXEL_SIZE) / 2,
+                y: (MAP_SIZE * PIXEL_SIZE) / 2,
+                zoom: 1.0
+            };
+            
+            // Палитра
+            const PALETTE = ['#FF4500', '#1E90FF', '#32CD32', '#FFD700', '#FF69B4', '#8A2BE2', '#FFFFFF', '#000000'];
+            let currentColor = PALETTE[0];
+            let isEraseMode = false;
+            
+            // Мышь
+            let mouseWorldX = camera.x, mouseWorldY = camera.y;
+            let isPanning = false;
+            let lastPanX = 0, lastPanY = 0;
+            
+            // UI элементы
+            const menuContainer = document.getElementById('menuContainer');
+            const gameContainer = document.getElementById('gameContainer');
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d', { alpha: false });
+            const gameStatus = document.getElementById('gameStatus');
+            const coordsDiv = document.getElementById('coords');
+            const playersCountDiv = document.getElementById('playersCount');
+            
+            // Инициализация меню
+            const tabs = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const targetTab = tab.dataset.tab;
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById(`tab-${targetTab}`).classList.add('active');
+                });
+            });
+            
+            // Подключение к мастер-серверу
+            function connectToMaster() {
+                if (ws) ws.close();
+                
+                ws = new WebSocket(MASTER_SERVER_URL);
+                
+                ws.onopen = () => {
+                    console.log('✅ Подключено к мастер-серверу');
+                    loadServerList();
+                };
+                
+                ws.onmessage = (event) => {
+                    try {
+                        const msg = JSON.parse(event.data);
+                        
+                        if (msg.type === 'servers_list') {
+                            displayServerList(msg.servers);
+                        } else if (msg.type === 'server_created') {
+                            showCreateSuccess(msg);
+                        } else if (msg.type === 'joined_server') {
+                            startGame(msg);
+                        } else if (msg.type === 'error') {
+                            showError(msg.message);
+                        } else if (msg.type === 'pixel_update') {
+                            handlePixelUpdate(msg);
+                        } else if (msg.type === 'player_joined') {
+                            playerCount = msg.playerCount;
+                            updatePlayersCount();
+                        } else if (msg.type === 'player_left') {
+                            playerCount = msg.playerCount;
+                            updatePlayersCount();
+                        } else if (msg.type === 'server_closed') {
+                            alert('Сервер был закрыт создателем');
+                            backToMenu();
+                        }
+                    } catch (e) {
+                        console.error('Ошибка сообщения:', e);
+                    }
+                };
+                
+                ws.onclose = () => {
+                    console.log('🔌 Отключено от мастер-сервера');
+                    if (gameContainer.classList.contains('hidden') === false) {
+                        gameStatus.textContent = '🔴 Отключено';
+                    }
+                };
+                
+                ws.onerror = (e) => {
+                    console.error('WebSocket ошибка:', e);
+                };
+            }
+            
+            // Загрузка списка серверов
+            function loadServerList() {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'get_servers' }));
+                }
+            }
+            
+            // Отображение списка серверов
+            function displayServerList(servers) {
+                const container = document.getElementById('serverList');
+                
+                if (!servers || servers.length === 0) {
+                    container.innerHTML = '<div class="loading">😴 Нет активных серверов<br><br>Создайте свой!</div>';
+                    return;
+                }
+                
+                container.innerHTML = servers.map(s => `
+                    <div class="server-item">
+                        <div class="server-info">
+                            <h3>${escapeHtml(s.name)}</h3>
+                            <p>👥 ${s.players}/${s.maxPlayers} | 🎨 ${s.pixels} пикс.</p>
+                        </div>
+                        <button class="join-btn" onclick="joinServer('${s.id}')">Подключиться</button>
+                    </div>
+                `).join('');
+            }
+            
+            window.joinServer = function(serverId) {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'join_server',
+                        serverId: serverId
+                    }));
+                }
+            };
+            
+            // Создание сервера
+            document.getElementById('createServerBtn').addEventListener('click', () => {
+                const name = document.getElementById('serverNameInput').value.trim() || 'Pixel Battle';
+                const isPrivate = document.getElementById('privateServerCheckbox').checked;
+                const maxPlayers = parseInt(document.getElementById('maxPlayersInput').value) || 20;
+                
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'create_server',
+                        name: name,
+                        isPrivate: isPrivate,
+                        maxPlayers: maxPlayers
+                    }));
+                    
+                    document.getElementById('createServerBtn').disabled = true;
+                    document.getElementById('createServerBtn').textContent = '⏳ Создание...';
+                }
+            });
+            
+            function showCreateSuccess(msg) {
+                const resultDiv = document.getElementById('createResult');
+                const code = msg.accessCode;
+                
+                if (code) {
+                    resultDiv.innerHTML = `
+                        <div class="success-message">✅ Сервер создан!</div>
+                        <div class="code-display">${code}</div>
+                        <p style="color: #aaccff; text-align: center; margin-bottom: 15px;">
+                            Отправьте этот код друзьям для входа
+                        </p>
+                        <button class="action-btn" onclick="joinServer('${msg.serverId}')">🎮 Войти в игру</button>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="success-message">✅ Публичный сервер создан!</div>
+                        <button class="action-btn" onclick="joinServer('${msg.serverId}')">🎮 Войти в игру</button>
+                    `;
+                }
+                
+                document.getElementById('createServerBtn').disabled = false;
+                document.getElementById('createServerBtn').textContent = '🚀 Создать сервер';
+            }
+            
+            // Вход по коду
+            document.getElementById('joinByCodeBtn').addEventListener('click', () => {
+                const code = document.getElementById('accessCodeInput').value.trim().toUpperCase();
+                
+                if (!code) {
+                    document.getElementById('joinResult').innerHTML = '<div class="error-message">Введите код доступа</div>';
+                    return;
+                }
+                
+                // TODO: Нужен эндпоинт для поиска сервера по коду
+                document.getElementById('joinResult').innerHTML = '<div class="error-message">Функция в разработке</div>';
+            });
+            
+            // Обновление списка
+            document.getElementById('refreshServersBtn').addEventListener('click', loadServerList);
+            
+            // Показ ошибки
+            function showError(message) {
+                alert('❌ ' + message);
+                document.getElementById('createServerBtn').disabled = false;
+                document.getElementById('createServerBtn').textContent = '🚀 Создать сервер';
+            }
+            
+            // Запуск игры
+            function startGame(msg) {
+                currentServerId = msg.serverId;
+                currentPlayerId = msg.playerId;
+                playerCount = msg.serverInfo.players;
+                
+                // Очищаем кеш пикселей
+                for (let key in pixelCache) delete pixelCache[key];
+                
+                // Загружаем пиксели
+                msg.pixels.forEach(item => {
+                    const [x, y, color] = item.split(':');
+                    if (color && color !== 'null') {
+                        pixelCache[x + ':' + y] = color;
+                    }
+                });
+                
+                // Переключаем интерфейс
+                menuContainer.classList.add('hidden');
+                gameContainer.classList.remove('hidden');
+                
+                gameStatus.textContent = `🟢 ${escapeHtml(msg.serverInfo.name)} | ${playerCount} игроков`;
+                updatePlayersCount();
+                
+                // Инициализация игры
+                initGame();
+            }
+            
+            // Инициализация игры
+            function initGame() {
+                resizeCanvas();
+                buildPalette();
+                
+                window.addEventListener('resize', resizeCanvas);
+                canvas.addEventListener('mousemove', onMouseMove);
+                canvas.addEventListener('mousedown', onMouseDown);
+                canvas.addEventListener('mouseup', onMouseUp);
+                canvas.addEventListener('wheel', onWheel, { passive: false });
+                canvas.addEventListener('contextmenu', e => e.preventDefault());
+                
+                render();
+            }
+            
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                render();
+            }
+            
+            function render() {
+                if (canvas.width === 0) return;
+                
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const w = canvas.width;
+                const h = canvas.height;
+                const worldWidth = w / camera.zoom;
+                const worldHeight = h / camera.zoom;
+                
+                const startX = Math.floor(camera.x - worldWidth / 2);
+                const startY = Math.floor(camera.y - worldHeight / 2);
+                const endX = Math.ceil(camera.x + worldWidth / 2);
+                const endY = Math.ceil(camera.y + worldHeight / 2);
+                
+                const tileStartX = Math.max(0, Math.floor(startX / PIXEL_SIZE) - 1);
+                const tileStartY = Math.max(0, Math.floor(startY / PIXEL_SIZE) - 1);
+                const tileEndX = Math.min(MAP_SIZE, Math.ceil(endX / PIXEL_SIZE) + 1);
+                const tileEndY = Math.min(MAP_SIZE, Math.ceil(endY / PIXEL_SIZE) + 1);
+                
+                const zoom = camera.zoom;
+                const camX = camera.x;
+                const camY = camera.y;
+                const halfW = w / 2;
+                const halfH = h / 2;
+                
+                for (let tx = tileStartX; tx < tileEndX; tx++) {
+                    for (let ty = tileStartY; ty < tileEndY; ty++) {
+                        const color = pixelCache[tx + ':' + ty];
+                        if (color) {
+                            const screenX = (tx * PIXEL_SIZE - camX) * zoom + halfW;
+                            const screenY = (ty * PIXEL_SIZE - camY) * zoom + halfH;
+                            const size = Math.max(1, PIXEL_SIZE * zoom);
+                            
+                            if (screenX + size > 0 && screenX < w && screenY + size > 0 && screenY < h) {
+                                ctx.fillStyle = color;
+                                ctx.fillRect(screenX, screenY, size, size);
+                            }
+                        }
+                    }
+                }
+                
+                updateCoordsLabel();
+            }
+            
+            function handlePixelUpdate(msg) {
+                const key = msg.x + ':' + msg.y;
+                if (msg.color === null) {
+                    delete pixelCache[key];
+                } else {
+                    pixelCache[key] = msg.color;
+                }
+                render();
+            }
+            
+            function placePixel() {
+                if (!currentServerId) return;
+                
+                const tileX = Math.floor(mouseWorldX / PIXEL_SIZE);
+                const tileY = Math.floor(mouseWorldY / PIXEL_SIZE);
+                
+                if (tileX < 0 || tileX >= MAP_SIZE || tileY < 0 || tileY >= MAP_SIZE) return;
+                
+                const color = isEraseMode ? null : currentColor;
+                const key = tileX + ':' + tileY;
+                
+                if (color === null) {
+                    delete pixelCache[key];
+                } else {
+                    pixelCache[key] = color;
+                }
+                render();
+                
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'place_pixel',
+                        x: tileX,
+                        y: tileY,
+                        color: color
+                    }));
+                }
+            }
+            
+            function onMouseMove(e) {
+                const rect = canvas.getBoundingClientRect();
+                const screenX = e.clientX - rect.left;
+                const screenY = e.clientY - rect.top;
+                
+                mouseWorldX = (screenX - canvas.width / 2) / camera.zoom + camera.x;
+                mouseWorldY = (screenY - canvas.height / 2) / camera.zoom + camera.y;
+                
+                mouseWorldX = Math.max(0, Math.min(MAP_SIZE * PIXEL_SIZE - 1, mouseWorldX));
+                mouseWorldY = Math.max(0, Math.min(MAP_SIZE * PIXEL_SIZE - 1, mouseWorldY));
+                
+                updateCoordsLabel();
+                
+                if (isPanning) {
+                    const dx = (e.clientX - lastPanX) / camera.zoom;
+                    const dy = (e.clientY - lastPanY) / camera.zoom;
+                    camera.x -= dx;
+                    camera.y -= dy;
+                    lastPanX = e.clientX;
+                    lastPanY = e.clientY;
+                    render();
+                }
+            }
+            
+            function onMouseDown(e) {
+                if (e.button === 0) {
+                    placePixel();
+                } else if (e.button === 1) {
+                    isPanning = true;
+                    lastPanX = e.clientX;
+                    lastPanY = e.clientY;
+                    canvas.style.cursor = 'grabbing';
+                    e.preventDefault();
+                }
+            }
+            
+            function onMouseUp(e) {
+                if (e.button === 1) {
+                    isPanning = false;
+                    canvas.style.cursor = 'crosshair';
+                    e.preventDefault();
+                }
+            }
+            
+            function onWheel(e) {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                const beforeX = (mouseX - canvas.width / 2) / camera.zoom + camera.x;
+                const beforeY = (mouseY - canvas.height / 2) / camera.zoom + camera.y;
+                
+                camera.zoom *= (e.deltaY > 0) ? 0.9 : 1.1;
+                camera.zoom = Math.min(30, Math.max(0.2, camera.zoom));
+                
+                const afterX = (mouseX - canvas.width / 2) / camera.zoom + camera.x;
+                const afterY = (mouseY - canvas.height / 2) / camera.zoom + camera.y;
+                
+                camera.x += beforeX - afterX;
+                camera.y += beforeY - afterY;
+                render();
+            }
+            
+            function updateCoordsLabel() {
+                const tileX = Math.floor(mouseWorldX / PIXEL_SIZE);
+                const tileY = Math.floor(mouseWorldY / PIXEL_SIZE);
+                coordsDiv.textContent = `X: ${tileX} Y: ${tileY} | 🔍 ${camera.zoom.toFixed(1)}x`;
+            }
+            
+            function updatePlayersCount() {
+                playersCountDiv.textContent = `👥 ${playerCount} ${playerCount === 1 ? 'игрок' : (playerCount < 5 ? 'игрока' : 'игроков')}`;
+            }
+            
+            function buildPalette() {
+                const container = document.getElementById('palette');
+                container.innerHTML = '';
+                
+                PALETTE.forEach((color, i) => {
+                    const btn = document.createElement('div');
+                    btn.className = 'color-btn' + (i === 0 ? ' active' : '');
+                    btn.style.backgroundColor = color;
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        document.getElementById('eraserBtn')?.classList.remove('active');
+                        isEraseMode = false;
+                        currentColor = color;
+                    });
+                    container.appendChild(btn);
+                });
+                
+                const eraserBtn = document.createElement('div');
+                eraserBtn.id = 'eraserBtn';
+                eraserBtn.className = 'color-btn';
+                eraserBtn.innerHTML = '🗑️';
+                eraserBtn.addEventListener('click', () => {
+                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                    eraserBtn.classList.add('active');
+                    isEraseMode = true;
+                });
+                container.appendChild(eraserBtn);
+                
+                const customBtn = document.createElement('div');
+                customBtn.id = 'customColorBtn';
+                customBtn.className = 'color-btn';
+                customBtn.innerHTML = '🎨';
+                customBtn.addEventListener('click', () => {
+                    document.getElementById('customColorPicker').click();
+                });
+                container.appendChild(customBtn);
+                
+                document.getElementById('customColorPicker').addEventListener('input', (e) => {
+                    currentColor = e.target.value;
+                    isEraseMode = false;
+                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                });
+            }
+            
+            function backToMenu() {
+                if (ws && ws.readyState === WebSocket.OPEN && currentServerId) {
+                    ws.send(JSON.stringify({ type: 'leave_server' }));
+                }
+                
+                currentServerId = null;
+                currentPlayerId = null;
+                gameContainer.classList.add('hidden');
+                menuContainer.classList.remove('hidden');
+                loadServerList();
+            }
+            
+            document.getElementById('backBtn').addEventListener('click', backToMenu);
+            
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            // Запуск
+            connectToMaster();
+            
+            // Периодическое обновление списка серверов
+            setInterval(() => {
+                if (menuContainer.classList.contains('hidden') === false) {
+                    loadServerList();
+                }
+            }, 5000);
+        })();
     </script>
 </body>
 </html>
