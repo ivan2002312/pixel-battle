@@ -23,18 +23,8 @@ const server = http.createServer((req, res) => {
         return;
     }
     
-    if (req.url === '/stats') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-            totalServers: servers.size,
-            publicServers: publicServers.size,
-            totalPlayers: Array.from(servers.values()).reduce((acc, s) => acc + s.info.players, 0)
-        }));
-        return;
-    }
-    
     if (req.url === '/servers') {
-        const publicList = Array.from(publicServers.values()).map(s => ({
+        const list = Array.from(publicServers.values()).map(s => ({
             id: s.info.id,
             name: s.info.name,
             isPrivate: s.info.isPrivate,
@@ -43,12 +33,12 @@ const server = http.createServer((req, res) => {
             pixels: s.info.pixels
         }));
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        res.end(JSON.stringify(publicList));
+        res.end(JSON.stringify(list));
         return;
     }
     
     res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end('<h1>Pixel Battle Master Server</h1>');
+    res.end('<h1>Pixel Battle Server</h1>');
 });
 
 const wss = new WebSocket.Server({ server });
@@ -63,6 +53,7 @@ wss.on('connection', (ws) => {
     ws.on('message', (message) => {
         try {
             const data = JSON.parse(message);
+            console.log('📨 Получено:', data.type);
             
             // Создание сервера
             if (data.type === 'create_server') {
@@ -81,8 +72,8 @@ wss.on('connection', (ws) => {
                 
                 servers.set(serverId, {
                     info: serverInfo,
-                    players: new Map(),
-                    pixels: new Map()
+                    players: new Map(), // playerId -> { ws, name }
+                    pixels: new Map()    // "x,y" -> { color, author }
                 });
                 
                 if (!serverInfo.isPrivate) {
@@ -101,36 +92,7 @@ wss.on('connection', (ws) => {
                     serverInfo: serverInfo
                 }));
                 
-                console.log(`🆕 Сервер: ${serverInfo.name} ${accessCode ? '🔒 ' + accessCode : '🌍'}`);
                 broadcastServerList();
-            }
-            
-            // Список серверов
-            else if (data.type === 'get_servers') {
-                const publicList = Array.from(publicServers.values()).map(s => ({
-                    id: s.info.id,
-                    name: s.info.name,
-                    isPrivate: s.info.isPrivate,
-                    players: s.info.players,
-                    maxPlayers: s.info.maxPlayers,
-                    pixels: s.info.pixels
-                }));
-                ws.send(JSON.stringify({ type: 'servers_list', servers: publicList }));
-            }
-            
-            // Поиск по коду
-            else if (data.type === 'find_server_by_code') {
-                const serverId = serversByCode.get(data.code);
-                if (serverId && servers.has(serverId)) {
-                    const s = servers.get(serverId);
-                    ws.send(JSON.stringify({
-                        type: 'servers_by_code',
-                        code: data.code,
-                        servers: [{ id: s.info.id, name: s.info.name, isPrivate: true, players: s.info.players, maxPlayers: s.info.maxPlayers }]
-                    }));
-                } else {
-                    ws.send(JSON.stringify({ type: 'servers_by_code', code: data.code, servers: [] }));
-                }
             }
             
             // Подключение к серверу
@@ -146,11 +108,6 @@ wss.on('connection', (ws) => {
                     return;
                 }
                 
-                if (server.info.players >= server.info.maxPlayers) {
-                    ws.send(JSON.stringify({ type: 'error', message: 'Сервер заполнен' }));
-                    return;
-                }
-                
                 currentPlayerId = generateId();
                 currentPlayerName = data.playerName || 'Гость';
                 currentServerId = data.serverId;
@@ -158,11 +115,14 @@ wss.on('connection', (ws) => {
                 server.players.set(currentPlayerId, { ws, name: currentPlayerName });
                 server.info.players++;
                 
-                const allPixels = [];
+                // Отправляем все пиксели
+                const pixels = [];
                 for (let [key, value] of server.pixels.entries()) {
-                    allPixels.push({ x: value.x, y: value.y, color: value.color, author: value.author });
+                    const [x, y] = key.split(',');
+                    pixels.push({ x: parseInt(x), y: parseInt(y), color: value.color, author: value.author });
                 }
                 
+                // Отправляем список игроков
                 const playerList = [];
                 server.players.forEach((p, id) => playerList.push({ id, name: p.name }));
                 
@@ -171,10 +131,11 @@ wss.on('connection', (ws) => {
                     serverId: data.serverId,
                     playerId: currentPlayerId,
                     serverInfo: server.info,
-                    pixels: allPixels,
+                    pixels: pixels,
                     players: playerList
                 }));
                 
+                // Оповещаем других
                 broadcastToServer(data.serverId, {
                     type: 'player_joined',
                     playerId: currentPlayerId,
@@ -184,7 +145,6 @@ wss.on('connection', (ws) => {
                 }, currentPlayerId);
                 
                 broadcastServerList();
-                console.log(`👤 ${currentPlayerName} подключился к ${server.info.name}`);
             }
             
             // Установка пикселя
@@ -192,26 +152,23 @@ wss.on('connection', (ws) => {
                 const server = servers.get(currentServerId);
                 if (!server) return;
                 
-                const { x, y, color } = data;
-                const key = `${x}:${y}`;
+                const x = parseInt(data.x);
+                const y = parseInt(data.y);
+                const color = data.color;
+                const key = `${x},${y}`;
                 
                 if (color === null) {
                     server.pixels.delete(key);
                 } else {
-                    server.pixels.set(key, {
-                        x: parseInt(x),
-                        y: parseInt(y),
-                        color: color,
-                        author: currentPlayerName
-                    });
+                    server.pixels.set(key, { color, author: currentPlayerName });
                 }
                 
                 server.info.pixels = server.pixels.size;
                 
                 broadcastToServer(currentServerId, {
                     type: 'pixel_update',
-                    x: parseInt(x),
-                    y: parseInt(y),
+                    x: x,
+                    y: y,
                     color: color,
                     author: currentPlayerName
                 });
@@ -240,6 +197,34 @@ wss.on('connection', (ws) => {
                 });
             }
             
+            // Получение списка серверов
+            else if (data.type === 'get_servers') {
+                const list = Array.from(publicServers.values()).map(s => ({
+                    id: s.info.id,
+                    name: s.info.name,
+                    isPrivate: s.info.isPrivate,
+                    players: s.info.players,
+                    maxPlayers: s.info.maxPlayers,
+                    pixels: s.info.pixels
+                }));
+                ws.send(JSON.stringify({ type: 'servers_list', servers: list }));
+            }
+            
+            // Поиск по коду
+            else if (data.type === 'find_server_by_code') {
+                const serverId = serversByCode.get(data.code);
+                if (serverId && servers.has(serverId)) {
+                    const s = servers.get(serverId);
+                    ws.send(JSON.stringify({
+                        type: 'servers_by_code',
+                        code: data.code,
+                        servers: [{ id: s.info.id, name: s.info.name, isPrivate: true, players: s.info.players, maxPlayers: s.info.maxPlayers }]
+                    }));
+                } else {
+                    ws.send(JSON.stringify({ type: 'servers_by_code', code: data.code, servers: [] }));
+                }
+            }
+            
         } catch (e) {
             console.error('Ошибка:', e.message);
         }
@@ -253,7 +238,6 @@ wss.on('connection', (ws) => {
                 servers.delete(currentServerId);
                 publicServers.delete(currentServerId);
                 broadcastServerList();
-                console.log(`🛑 Сервер удалён: ${currentServerId}`);
             }
         } else if (currentServerId && currentPlayerId) {
             const server = servers.get(currentServerId);
@@ -273,7 +257,6 @@ wss.on('connection', (ws) => {
                 });
                 
                 broadcastServerList();
-                console.log(`👋 ${currentPlayerName} покинул сервер`);
             }
         }
     });
@@ -291,7 +274,7 @@ function broadcastToServer(serverId, message, excludeId = null) {
 }
 
 function broadcastServerList() {
-    const publicList = Array.from(publicServers.values()).map(s => ({
+    const list = Array.from(publicServers.values()).map(s => ({
         id: s.info.id,
         name: s.info.name,
         isPrivate: s.info.isPrivate,
@@ -302,11 +285,11 @@ function broadcastServerList() {
     
     wss.clients.forEach(c => {
         if (c.readyState === WebSocket.OPEN) {
-            c.send(JSON.stringify({ type: 'servers_list', servers: publicList }));
+            c.send(JSON.stringify({ type: 'servers_list', servers: list }));
         }
     });
 }
 
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`🎮 Мастер-сервер на порту ${PORT}`);
+    console.log(`🎮 Сервер на порту ${PORT}`);
 });
