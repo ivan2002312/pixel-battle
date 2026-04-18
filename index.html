@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🌍 Pixel Battle 1M x 1M (Online)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #0a0a14;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        /* Верхняя панель информации */
+        #topPanel {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .info-badge {
+            background: rgba(20, 20, 35, 0.85);
+            color: #e0e0ff;
+            padding: 8px 18px;
+            border-radius: 40px;
+            backdrop-filter: blur(8px);
+            border: 1px solid #5a5a8a;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+
+        #statusBadge {
+            background: rgba(30, 40, 30, 0.85);
+            border-color: #6a9a6a;
+            transition: all 0.3s;
+        }
+
+        #statusBadge.offline {
+            background: rgba(50, 30, 30, 0.85);
+            border-color: #9a6a6a;
+            color: #ffaaaa;
+        }
+
+        /* Кнопка настроек */
+        #settingsBtn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(40, 40, 60, 0.9);
+            backdrop-filter: blur(8px);
+            border: 2px solid #7a7aaa;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            z-index: 300;
+            pointer-events: auto;
+        }
+
+        #settingsBtn:hover {
+            background: #5a5a8a;
+            transform: rotate(45deg);
+        }
+
+        /* Панель настроек */
+        #settingsPanel {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 320px;
+            background: rgba(25, 25, 40, 0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 2px solid #6a6a9a;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            z-index: 250;
+            display: none;
+            pointer-events: auto;
+            color: #ddd;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        #settingsPanel.active {
+            display: block;
+        }
+
+        .settings-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #bbbbff;
+            text-align: center;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .setting-item {
+            margin-bottom: 18px;
+        }
+
+        .setting-item label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .setting-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #6a6aff;
+        }
+
+        .setting-item input[type="color"] {
+            width: 60px;
+            height: 35px;
+            border: 2px solid #888;
+            border-radius: 8px;
+            background: transparent;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .setting-item input[type="range"] {
+            width: 100%;
+            margin-top: 8px;
+            cursor: pointer;
+        }
+
+        .setting-value {
+            float: right;
+            color: #aaccff;
+        }
+
+        .setting-divider {
+            height: 1px;
+            background: #4a4a6a;
+            margin: 20px 0;
+        }
+
+        /* Координаты внизу */
+        #coords {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(20, 20, 35, 0.85);
+            backdrop-filter: blur(5px);
+            color: #ccd6ff;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            border: 1px solid #5a5aff;
+            z-index: 100;
+            pointer-events: none;
+            box-shadow: 0 2px 10px black;
+        }
+
+        #fps {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(30, 30, 50, 0.7);
+            backdrop-filter: blur(5px);
+            color: #aaffaa;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            border: 1px solid #5a9a5a;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        #ping {
+            position: fixed;
+            bottom: 20px;
+            left: 120px;
+            background: rgba(30, 30, 50, 0.7);
+            backdrop-filter: blur(5px);
+            color: #ffd700;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            border: 1px solid #aaaa5a;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        /* Палитра */
+        #palette {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(25, 25, 45, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 14px 25px;
+            border-radius: 60px;
+            border: 2px solid #6a6a9a;
+            z-index: 200;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+        }
+
+        .color-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: 3px solid #aaa;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 3px 0 #00000080;
+        }
+
+        .color-btn:hover {
+            transform: scale(1.15) translateY(-2px);
+            border-color: white;
+            box-shadow: 0 5px 10px black;
+        }
+
+        .color-btn.active {
+            border: 4px solid white;
+            box-shadow: 0 0 25px currentColor;
+            transform: scale(1.1);
+        }
+
+        /* Кнопка реконнекта */
+        #reconnectBtn {
+            position: fixed;
+            bottom: 80px;
+            left: 20px;
+            background: rgba(100, 50, 50, 0.9);
+            backdrop-filter: blur(5px);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 2px solid #ff6a6a;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 150;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: 0.2s;
+        }
+
+        #reconnectBtn:hover {
+            background: rgba(150, 50, 50, 0.9);
+            transform: scale(1.05);
+        }
+
+        #reconnectBtn.visible {
+            display: block;
+        }
+
+        /* Анимация клика */
+        @keyframes clickFeedback {
+            0% { opacity: 1; transform: scale(0.5); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+
+        .click-ripple {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 3px solid white;
+            pointer-events: none;
+            z-index: 9999;
+            animation: clickFeedback 0.3s ease-out forwards;
+        }
+
+        /* Подсказка управления */
+        #helpText {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            background: rgba(20, 20, 40, 0.7);
+            backdrop-filter: blur(5px);
+            color: #aaccff;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            border: 1px solid #5a5a9a;
+            z-index: 90;
+            pointer-events: none;
+        }
+
+        /* Скроллбар для панели настроек */
+        #settingsPanel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #settingsPanel::-webkit-scrollbar-track {
+            background: #2a2a3a;
+            border-radius: 10px;
+        }
+
+        #settingsPanel::-webkit-scrollbar-thumb {
+            background: #6a6a9a;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- UI Элементы -->
+    <div id="topPanel">
+        <div class="info-badge">🗺️ Карта: 1M x 1M | 🔍 Колёсико — зум</div>
+        <div id="statusBadge" class="info-badge">🔌 Подключение...</div>
+    </div>
+
+    <div id="helpText">
+        🖱️ Клик — рисовать<br>
+        ␣ Пробел + Драг — двигать<br>
+        ⚙️ — настройки
+    </div>
+
+    <div id="settingsBtn" title="Настройки">⚙️</div>
+
+    <div id="settingsPanel">
+        <div class="settings-title">⚡ НАСТРОЙКИ ⚡</div>
+        
+        <div class="setting-item">
+            <label>
+                <input type="checkbox" id="showGridCheckbox" checked> 🕸️ Показывать сетку
+            </label>
+        </div>
+
+        <div class="setting-item">
+            <label style="display: block;">
+                <span>🎨 Цвет сетки</span>
+                <input type="color" id="gridColorPicker" value="#4a4a7a">
+            </label>
+        </div>
+
+        <div class="setting-item">
+            <label style="display: block;">
+                <span>📏 Размер пикселя</span>
+                <input type="range" id="pixelSizeSlider" min="5" max="20" value="10" step="1">
+                <span class="setting-value" id="pixelSizeValue">10 px</span>
+            </label>
+        </div>
+
+        <div class="setting-divider"></div>
+
+        <div class="setting-item">
+            <label>
+                <input type="checkbox" id="showFPS"> 📊 Показывать FPS
+            </label>
+        </div>
+
+        <div class="setting-item">
+            <label>
+                <input type="checkbox" id="showPing"> 📡 Показывать Ping
+            </label>
+        </div>
+
+        <div class="setting-item">
+            <label>
+                <input type="checkbox" id="clickEffectCheckbox" checked> ✨ Эффект при клике
+            </label>
+        </div>
+
+        <div class="setting-divider"></div>
+
+        <div class="setting-item">
+            <label style="display: block;">
+                <span>🌐 Сервер WebSocket</span>
+                <input type="text" id="serverUrlInput" value="ws://localhost:8080" 
+                       style="width: 100%; padding: 8px; margin-top: 8px; background: #2a2a3a; 
+                              border: 1px solid #6a6a9a; color: white; border-radius: 8px;">
+            </label>
+        </div>
+
+        <div style="margin-top: 25px; text-align: center;">
+            <button id="applyServerBtn" style="padding: 10px 20px; background: #5a5a9a; 
+                    border: none; color: white; border-radius: 20px; cursor: pointer; 
+                    font-weight: bold; width: 100%;">
+                🔄 Переподключиться
+            </button>
+        </div>
+    </div>
+
+    <div id="coords">X: 500000 Y: 500000 | 🔍 1.0x</div>
+    <div id="fps">⚡ FPS: --</div>
+    <div id="ping">📡 Ping: -- ms</div>
+
+    <button id="reconnectBtn">🔄 Переподключиться к серверу</button>
+
+    <div id="palette">
+        <!-- Заполняется JS -->
+    </div>
+
+    <script>
+        (function(){
+            "use strict";
+
+            // ---------- КОНФИГУРАЦИЯ ----------
+            const MAP_SIZE = 1000000;
+            const DEFAULT_PIXEL_SIZE = 10;
+            const DEFAULT_SERVER_URL = 'ws://localhost:8080';
+            
+            // Состояния
+            let pixelSize = DEFAULT_PIXEL_SIZE;
+            let showGrid = true;
+            let gridColor = '#4a4a7a';
+            let showFPS = false;
+            let showPing = false;
+            let clickEffect = true;
+            let serverUrl = DEFAULT_SERVER_URL;
+            
+            // Кеш пикселей
+            const pixelCache = new Map();
+            
+            // Камера
+            let camera = {
+                x: (MAP_SIZE * DEFAULT_PIXEL_SIZE) / 2,
+                y: (MAP_SIZE * DEFAULT_PIXEL_SIZE) / 2,
+                zoom: 1.0
+            };
+            
+            // UI
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d', { alpha: false });
+            ctx.imageSmoothingEnabled = false;
+            
+            const coordsDiv = document.getElementById('coords');
+            const statusDiv = document.getElementById('statusBadge');
+            const fpsDiv = document.getElementById('fps');
+            const pingDiv = document.getElementById('ping');
+            const reconnectBtn = document.getElementById('reconnectBtn');
+            
+            // Палитра
+            const PALETTE = [
+                '#FF4500', '#1E90FF', '#32CD32', '#FFD700',
+                '#FF69B4', '#8A2BE2', '#FFFFFF', '#000000'
+            ];
+            let currentColor = PALETTE[0];
+            
+            // WebSocket
+            let ws = null;
+            let isConnected = false;
+            let pingStartTime = 0;
+            let currentPing = 0;
+            let playerCount = 0;
+            let reconnectAttempts = 0;
+            let maxReconnectAttempts = 5;
+            
+            // Мышь и взаимодействие
+            let mouseWorldX = camera.x, mouseWorldY = camera.y;
+            let isPanning = false;
+            let lastPanX = 0, lastPanY = 0;
+            let spacePressed = false;
+            
+            // FPS счётчик
+            let frameCount = 0;
+            let lastFpsUpdate = performance.now();
+            let fps = 60;
+            
+            // ---------- НАСТРОЙКИ ИЗ DOM ----------
+            const settingsPanel = document.getElementById('settingsPanel');
+            const settingsBtn = document.getElementById('settingsBtn');
+            const showGridCheck = document.getElementById('showGridCheckbox');
+            const gridColorPicker = document.getElementById('gridColorPicker');
+            const pixelSizeSlider = document.getElementById('pixelSizeSlider');
+            const pixelSizeValue = document.getElementById('pixelSizeValue');
+            const showFpsCheck = document.getElementById('showFPS');
+            const showPingCheck = document.getElementById('showPing');
+            const clickEffectCheck = document.getElementById('clickEffectCheckbox');
+            const serverUrlInput = document.getElementById('serverUrlInput');
+            const applyServerBtn = document.getElementById('applyServerBtn');
+            
+            // Установка начальных значений
+            serverUrlInput.value = serverUrl;
+            
+            // Переключение панели
+            settingsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                settingsPanel.classList.toggle('active');
+            });
+            
+            // Закрытие по клику вне панели
+            document.addEventListener('click', (e) => {
+                if (!settingsPanel.contains(e.target) && e.target !== settingsBtn) {
+                    settingsPanel.classList.remove('active');
+                }
+            });
+            
+            // Обработчики настроек
+            showGridCheck.addEventListener('change', () => {
+                showGrid = showGridCheck.checked;
+                render();
+            });
+            
+            gridColorPicker.addEventListener('input', () => {
+                gridColor = gridColorPicker.value;
+                render();
+            });
+            
+            pixelSizeSlider.addEventListener('input', () => {
+                pixelSize = parseInt(pixelSizeSlider.value);
+                pixelSizeValue.textContent = pixelSize + ' px';
+                render();
+            });
+            
+            showFpsCheck.addEventListener('change', () => {
+                showFPS = showFpsCheck.checked;
+                fpsDiv.style.display = showFPS ? 'block' : 'none';
+            });
+            
+            showPingCheck.addEventListener('change', () => {
+                showPing = showPingCheck.checked;
+                pingDiv.style.display = showPing ? 'block' : 'none';
+            });
+            
+            clickEffectCheck.addEventListener('change', () => {
+                clickEffect = clickEffectCheck.checked;
+            });
+            
+            applyServerBtn.addEventListener('click', () => {
+                serverUrl = serverUrlInput.value;
+                reconnect();
+            });
+            
+            reconnectBtn.addEventListener('click', reconnect);
+            
+            fpsDiv.style.display = 'none';
+            pingDiv.style.display = 'none';
+            
+            // ---------- РАЗМЕР КАНВАСА ----------
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                render();
+            }
+            window.addEventListener('resize', resizeCanvas);
+            
+            // ---------- WEBSOCKET ----------
+            function connect() {
+                if (ws) {
+                    ws.close();
+                }
+                
+                try {
+                    ws = new WebSocket(serverUrl);
+                    statusDiv.innerHTML = '🟡 Подключение...';
+                    statusDiv.classList.remove('offline');
+                    reconnectBtn.classList.remove('visible');
+                } catch (e) {
+                    console.error('Ошибка создания WebSocket:', e);
+                    handleDisconnect();
+                    return;
+                }
+                
+                ws.onopen = () => {
+                    console.log('✅ WebSocket соединение установлено');
+                    isConnected = true;
+                    reconnectAttempts = 0;
+                    statusDiv.innerHTML = '🟢 Онлайн';
+                    statusDiv.classList.remove('offline');
+                    reconnectBtn.classList.remove('visible');
+                    
+                    // Запускаем пинг
+                    startPing();
+                };
+                
+                ws.onmessage = (event) => {
+                    try {
+                        const msg = JSON.parse(event.data);
+                        
+                        if (msg.type === 'init') {
+                            // Загружаем все пиксели
+                            pixelCache.clear();
+                            msg.data.forEach(item => {
+                                const [x, y, color] = item.split(':');
+                                pixelCache.set(`${x}:${y}`, color);
+                            });
+                            
+                            playerCount = msg.playerCount || 1;
+                            updateStatusMessage(msg.data.length);
+                            render();
+                        } else if (msg.type === 'bulk_update') {
+                            msg.data.forEach(item => {
+                                const [x, y, color] = item.split(':');
+                                pixelCache.set(`${x}:${y}`, color);
+                            });
+                            render();
+                        } else if (msg.type === 'pong') {
+                            // Обработка пинга
+                            if (pingStartTime > 0) {
+                                currentPing = Date.now() - pingStartTime;
+                                pingStartTime = 0;
+                                updatePingDisplay();
+                            }
+                        } else if (msg.type === 'player_count') {
+                            playerCount = msg.count;
+                            updateStatusMessage(pixelCache.size);
+                        }
+                    } catch (e) {
+                        console.error('Ошибка обработки сообщения:', e);
+                    }
+                };
+                
+                ws.onclose = (event) => {
+                    console.log('🔌 WebSocket закрыт:', event.code, event.reason);
+                    handleDisconnect();
+                };
+                
+                ws.onerror = (error) => {
+                    console.error('❌ WebSocket ошибка:', error);
+                    handleDisconnect();
+                };
+            }
+            
+            function handleDisconnect() {
+                isConnected = false;
+                statusDiv.innerHTML = '🔴 Офлайн';
+                statusDiv.classList.add('offline');
+                reconnectBtn.classList.add('visible');
+                
+                // Автоматический реконнект
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    console.log(`🔄 Попытка переподключения ${reconnectAttempts}/${maxReconnectAttempts}...`);
+                    setTimeout(() => {
+                        if (!isConnected) {
+                            connect();
+                        }
+                    }, 3000 * reconnectAttempts);
+                }
+            }
+            
+            function reconnect() {
+                reconnectAttempts = 0;
+                connect();
+            }
+            
+            function updateStatusMessage(pixelCount) {
+                const playerWord = playerCount === 1 ? 'игрок' : 
+                                  (playerCount < 5 ? 'игрока' : 'игроков');
+                statusDiv.innerHTML = `🟢 ${playerCount} ${playerWord} | ${pixelCount} пикс.`;
+            }
+            
+            // Пинг
+            function startPing() {
+                setInterval(() => {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        pingStartTime = Date.now();
+                        ws.send(JSON.stringify({ type: 'ping' }));
+                    }
+                }, 5000);
+            }
+            
+            function updatePingDisplay() {
+                if (showPing) {
+                    const pingColor = currentPing < 50 ? '#aaffaa' : 
+                                     (currentPing < 100 ? '#ffd700' : '#ff8a8a');
+                    pingDiv.style.color = pingColor;
+                    pingDiv.innerHTML = `📡 Ping: ${currentPing} ms`;
+                }
+            }
+            
+            // ---------- ОТРИСОВКА ----------
+            function render() {
+                if (canvas.width === 0) return;
+                
+                // Фон
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const worldWidth = canvas.width / camera.zoom;
+                const worldHeight = canvas.height / camera.zoom;
+                const startX = Math.floor(camera.x - worldWidth / 2);
+                const startY = Math.floor(camera.y - worldHeight / 2);
+                const endX = Math.ceil(camera.x + worldWidth / 2);
+                const endY = Math.ceil(camera.y + worldHeight / 2);
+                
+                const viewStartX = Math.max(0, Math.floor(startX / pixelSize) - 1);
+                const viewStartY = Math.max(0, Math.floor(startY / pixelSize) - 1);
+                const viewEndX = Math.min(MAP_SIZE, Math.ceil(endX / pixelSize) + 1);
+                const viewEndY = Math.min(MAP_SIZE, Math.ceil(endY / pixelSize) + 1);
+                
+                // Рисуем пиксели
+                for (let tx = viewStartX; tx < viewEndX; tx++) {
+                    for (let ty = viewStartY; ty < viewEndY; ty++) {
+                        const color = pixelCache.get(`${tx}:${ty}`);
+                        if (color) {
+                            const worldX = tx * pixelSize;
+                            const worldY = ty * pixelSize;
+                            const screenX = (worldX - camera.x) * camera.zoom + canvas.width / 2;
+                            const screenY = (worldY - camera.y) * camera.zoom + canvas.height / 2;
+                            const size = pixelSize * camera.zoom;
+                            
+                            if (screenX + size > 0 && screenX < canvas.width &&
+                                screenY + size > 0 && screenY < canvas.height) {
+                                ctx.fillStyle = color;
+                                ctx.fillRect(screenX, screenY, size, size);
+                            }
+                        }
+                    }
+                }
+                
+                // Сетка
+                if (showGrid && camera.zoom > 0.5) {
+                    drawGrid(viewStartX, viewEndX, viewStartY, viewEndY);
+                }
+                
+                // FPS
+                frameCount++;
+                const now = performance.now();
+                if (now - lastFpsUpdate >= 1000) {
+                    fps = frameCount;
+                    frameCount = 0;
+                    lastFpsUpdate = now;
+                    if (showFPS) fpsDiv.textContent = `⚡ FPS: ${fps}`;
+                }
+                
+                updateCoordsLabel();
+            }
+            
+            function drawGrid(startX, endX, startY, endY) {
+                ctx.beginPath();
+                ctx.strokeStyle = gridColor;
+                ctx.lineWidth = Math.max(0.5, 1 / camera.zoom);
+                
+                const step = pixelSize;
+                const firstX = Math.floor(startX / step) * step;
+                const firstY = Math.floor(startY / step) * step;
+                
+                for (let x = firstX; x <= endX * step; x += step) {
+                    const screenX = (x - camera.x) * camera.zoom + canvas.width / 2;
+                    if (screenX >= 0 && screenX <= canvas.width) {
+                        ctx.moveTo(screenX, 0);
+                        ctx.lineTo(screenX, canvas.height);
+                    }
+                }
+                
+                for (let y = firstY; y <= endY * step; y += step) {
+                    const screenY = (y - camera.y) * camera.zoom + canvas.height / 2;
+                    if (screenY >= 0 && screenY <= canvas.height) {
+                        ctx.moveTo(0, screenY);
+                        ctx.lineTo(canvas.width, screenY);
+                    }
+                }
+                ctx.stroke();
+            }
+            
+            function updateCoordsLabel() {
+                const tileX = Math.floor(mouseWorldX / pixelSize);
+                const tileY = Math.floor(mouseWorldY / pixelSize);
+                coordsDiv.innerHTML = `X: ${tileX} Y: ${tileY} | 🔍 ${camera.zoom.toFixed(1)}x`;
+            }
+            
+            // ---------- КОНВЕРТАЦИЯ КООРДИНАТ ----------
+            function screenToWorld(screenX, screenY) {
+                return {
+                    x: (screenX - canvas.width / 2) / camera.zoom + camera.x,
+                    y: (screenY - canvas.height / 2) / camera.zoom + camera.y
+                };
+            }
+            
+            // ---------- УСТАНОВКА ПИКСЕЛЯ ----------
+            function placePixel() {
+                if (!isConnected) {
+                    alert('Нет соединения с сервером. Нажмите "Переподключиться"');
+                    return;
+                }
+                
+                const tileX = Math.floor(mouseWorldX / pixelSize);
+                const tileY = Math.floor(mouseWorldY / pixelSize);
+                
+                if (tileX < 0 || tileX >= MAP_SIZE || tileY < 0 || tileY >= MAP_SIZE) return;
+                
+                const key = `${tileX}:${tileY}`;
+                const oldColor = pixelCache.get(key);
+                
+                // Оптимистичное обновление
+                pixelCache.set(key, currentColor);
+                render();
+                
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'place_pixel',
+                        x: tileX,
+                        y: tileY,
+                        color: currentColor
+                    }));
+                } else {
+                    // Откат если нет соединения
+                    pixelCache.set(key, oldColor);
+                    render();
+                }
+                
+                // Эффект клика
+                if (clickEffect) {
+                    const rect = canvas.getBoundingClientRect();
+                    const screenX = (tileX * pixelSize - camera.x) * camera.zoom + canvas.width / 2;
+                    const screenY = (tileY * pixelSize - camera.y) * camera.zoom + canvas.height / 2;
+                    
+                    const ripple = document.createElement('div');
+                    ripple.className = 'click-ripple';
+                    ripple.style.left = (rect.left + screenX) + 'px';
+                    ripple.style.top = (rect.top + screenY) + 'px';
+                    ripple.style.borderColor = currentColor;
+                    document.body.appendChild(ripple);
+                    setTimeout(() => ripple.remove(), 300);
+                }
+            }
+            
+            // ---------- ОБРАБОТЧИКИ МЫШИ ----------
+            function onMouseMove(e) {
+                const rect = canvas.getBoundingClientRect();
+                const world = screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
+                mouseWorldX = Math.max(0, Math.min(MAP_SIZE * pixelSize - 1, world.x));
+                mouseWorldY = Math.max(0, Math.min(MAP_SIZE * pixelSize - 1, world.y));
+                updateCoordsLabel();
+                
+                if (isPanning) {
+                    const dx = (e.clientX - lastPanX) / camera.zoom;
+                    const dy = (e.clientY - lastPanY) / camera.zoom;
+                    camera.x -= dx;
+                    camera.y -= dy;
+                    lastPanX = e.clientX;
+                    lastPanY = e.clientY;
+                    render();
+                }
+            }
+            
+            function onMouseDown(e) {
+                if (e.button === 0) {
+                    if (spacePressed) {
+                        isPanning = true;
+                        lastPanX = e.clientX;
+                        lastPanY = e.clientY;
+                        canvas.style.cursor = 'grabbing';
+                    } else {
+                        placePixel();
+                    }
+                }
+            }
+            
+            function onMouseUp(e) {
+                if (e.button === 0 && isPanning) {
+                    isPanning = false;
+                    canvas.style.cursor = spacePressed ? 'grab' : 'crosshair';
+                }
+            }
+            
+            function onWheel(e) {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                const before = screenToWorld(mouseX, mouseY);
+                camera.zoom *= (e.deltaY > 0) ? 0.9 : 1.1;
+                camera.zoom = Math.min(30, Math.max(0.3, camera.zoom));
+                const after = screenToWorld(mouseX, mouseY);
+                
+                camera.x += before.x - after.x;
+                camera.y += before.y - after.y;
+                render();
+            }
+            
+            // ---------- КЛАВИАТУРА ----------
+            function onKeyDown(e) {
+                if (e.code === 'Space' && !spacePressed) {
+                    spacePressed = true;
+                    canvas.style.cursor = 'grab';
+                    e.preventDefault();
+                }
+            }
+            
+            function onKeyUp(e) {
+                if (e.code === 'Space') {
+                    spacePressed = false;
+                    isPanning = false;
+                    canvas.style.cursor = 'crosshair';
+                    e.preventDefault();
+                }
+            }
+            
+            // ---------- ПАЛИТРА ----------
+            function buildPalette() {
+                const container = document.getElementById('palette');
+                PALETTE.forEach((color, i) => {
+                    const btn = document.createElement('div');
+                    btn.className = 'color-btn' + (i === 0 ? ' active' : '');
+                    btn.style.backgroundColor = color;
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        currentColor = color;
+                    });
+                    container.appendChild(btn);
+                });
+            }
+            
+            // ---------- ИНИЦИАЛИЗАЦИЯ ----------
+            function init() {
+                resizeCanvas();
+                buildPalette();
+                connect();
+                
+                canvas.addEventListener('mousemove', onMouseMove);
+                canvas.addEventListener('mousedown', onMouseDown);
+                canvas.addEventListener('mouseup', onMouseUp);
+                canvas.addEventListener('wheel', onWheel, { passive: false });
+                canvas.addEventListener('contextmenu', e => e.preventDefault());
+                
+                window.addEventListener('keydown', onKeyDown);
+                window.addEventListener('keyup', onKeyUp);
+                window.addEventListener('blur', () => { 
+                    spacePressed = false; 
+                    isPanning = false;
+                    canvas.style.cursor = 'crosshair';
+                });
+                
+                render();
+            }
+            
+            init();
+        })();
+    </script>
+</body>
+</html>
