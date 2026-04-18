@@ -27,7 +27,7 @@
         }
         #menuContainer.hidden { display: none; }
         .menu-box {
-            width: 700px;
+            width: 750px;
             max-width: 100%;
             background: rgba(30, 30, 50, 0.95);
             border-radius: 30px;
@@ -37,7 +37,7 @@
             backdrop-filter: blur(10px);
         }
         h1 { text-align: center; font-size: 36px; margin-bottom: 30px; color: #bbbbff; text-shadow: 0 0 20px #6a6aff; }
-        h2 { color: #bbbbff; margin-bottom: 20px; text-align: center; }
+        h2 { color: #bbbbff; margin-bottom: 20px; text-align: center; font-size: 18px; }
         .tabs { display: flex; gap: 5px; margin-bottom: 25px; border-bottom: 2px solid #3a3a5a; }
         .tab-btn {
             padding: 12px 24px;
@@ -312,6 +312,105 @@
         }
         #eraseModeIndicator.visible { display: block; }
 
+        #playerList {
+            position: fixed;
+            top: 80px; right: 20px;
+            background: rgba(25, 25, 40, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            border: 2px solid #5a5a8a;
+            z-index: 200;
+            max-height: 300px;
+            overflow-y: auto;
+            min-width: 180px;
+            pointer-events: none;
+        }
+        .player-list-title {
+            color: #bbbbff;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-align: center;
+            border-bottom: 1px solid #4a4a6a;
+            padding-bottom: 5px;
+        }
+        .player-item {
+            padding: 5px 10px;
+            color: #aaccff;
+            font-size: 14px;
+            border-bottom: 1px solid #3a3a5a;
+        }
+        .player-item:last-child { border-bottom: none; }
+
+        #pixelInfo {
+            position: fixed;
+            bottom: 80px; left: 20px;
+            background: rgba(20, 20, 35, 0.95);
+            color: #ccd6ff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            border: 1px solid #5a5aff;
+            z-index: 100;
+            pointer-events: none;
+            display: none;
+            backdrop-filter: blur(5px);
+        }
+        #pixelInfo.visible { display: block; }
+
+        #nicknameContainer {
+            position: fixed;
+            top: 15px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(8px);
+            border-radius: 40px;
+            padding: 5px 15px;
+            border: 2px solid #6a6aff;
+            z-index: 150;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            pointer-events: auto;
+        }
+        #nicknameInput {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            padding: 8px;
+            outline: none;
+            text-align: center;
+            width: 150px;
+        }
+        #nicknameInput:focus { border-bottom: 2px solid #6a6aff; }
+        #saveNicknameBtn {
+            background: #5a5a9a;
+            border: none;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #saveNicknameBtn:hover { background: #7a7aff; }
+        #changeNickBtn {
+            position: fixed;
+            top: 15px; left: 200px;
+            padding: 8px 15px;
+            background: rgba(40, 40, 60, 0.9);
+            color: white;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 13px;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            border: 1px solid #6a6aff;
+            pointer-events: auto;
+        }
+        #changeNickBtn:hover { background: #5a5a8a; }
+
         #palette {
             position: fixed;
             bottom: 25px;
@@ -390,6 +489,13 @@
         <div class="menu-box">
             <h1>🎮 Pixel Battle</h1>
             
+            <div style="margin-bottom: 20px;">
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                    <label style="margin-bottom: 0; min-width: 60px;">👤 Ник:</label>
+                    <input type="text" id="menuNicknameInput" placeholder="Ваш ник" maxlength="16" style="width: auto; flex: 1;">
+                </div>
+            </div>
+            
             <div class="tabs">
                 <button class="tab-btn active" data-tab="public">🌍 Публичные</button>
                 <button class="tab-btn" data-tab="create">✨ Создать</button>
@@ -445,7 +551,14 @@
             <div class="info-badge" id="serverNameDisplay">Pixel Battle</div>
         </div>
         <button id="backBtn">🚪 Выйти</button>
+        <button id="changeNickBtn">✏️ Сменить ник</button>
         <div id="settingsBtn" title="Настройки">⚙️</div>
+        
+        <div id="nicknameContainer">
+            <span style="color: #aaccff;">👤</span>
+            <input type="text" id="nicknameInput" placeholder="Ваш ник" maxlength="16">
+            <button id="saveNicknameBtn">Сохранить</button>
+        </div>
         
         <div id="settingsPanel">
             <div class="settings-title">⚡ НАСТРОЙКИ ⚡</div>
@@ -470,9 +583,19 @@
             <div class="setting-item">
                 <label><input type="checkbox" id="eraseWithRightClickCheckbox" checked> 🗑️ ПКМ = ластик</label>
             </div>
+            <div class="setting-item">
+                <label><input type="checkbox" id="showPlayerListCheckbox" checked> 👥 Список игроков</label>
+            </div>
         </div>
         
         <canvas id="gameCanvas"></canvas>
+        
+        <div id="playerList">
+            <div class="player-list-title">👥 Игроки онлайн</div>
+            <div id="playerListContent"></div>
+        </div>
+        
+        <div id="pixelInfo"></div>
         
         <div id="helpText">
             🖱️ ЛКМ — рисовать<br>
@@ -497,25 +620,32 @@
             // КОНФИГУРАЦИЯ
             const MASTER_SERVER_URL = 'wss://pixel-battle-production.up.railway.app';
             const MAP_SIZE = 1000000;
-            const PIXEL_SIZE = 10;
             
             // Состояние
             let ws = null;
             let currentServerId = null;
             let currentPlayerId = null;
-            let isConnected = false;
             let serverInfo = null;
+            
+            // Ник
+            let currentPlayerName = localStorage.getItem('pixelBattleNick') || '';
+            const menuNicknameInput = document.getElementById('menuNicknameInput');
+            const nicknameInput = document.getElementById('nicknameInput');
+            
+            // Загружаем сохранённый ник
+            if (currentPlayerName) {
+                menuNicknameInput.value = currentPlayerName;
+                nicknameInput.value = currentPlayerName;
+            }
             
             // Игровые данные
             const pixelCache = Object.create(null);
             let playerCount = 0;
+            let players = new Map();
+            let showPlayerList = true;
             
             // Камера
-            let camera = {
-                x: (MAP_SIZE * PIXEL_SIZE) / 2,
-                y: (MAP_SIZE * PIXEL_SIZE) / 2,
-                zoom: 1.0
-            };
+            let camera = { x: 500000, y: 500000, zoom: 1.0 };
             
             // Палитра
             const PALETTE = ['#FF4500', '#1E90FF', '#32CD32', '#FFD700', '#FF69B4', '#8A2BE2', '#FFFFFF', '#000000'];
@@ -532,7 +662,7 @@
             let ctrlPressed = false;
             
             // Мышь
-            let mouseWorldX = camera.x, mouseWorldY = camera.y;
+            let mousePixelX = 500000, mousePixelY = 500000;
             let isPanning = false;
             let lastPanX = 0, lastPanY = 0;
             
@@ -553,6 +683,12 @@
             const playersCountDiv = document.getElementById('playersCount');
             const fpsDiv = document.getElementById('fps');
             const eraseIndicator = document.getElementById('eraseModeIndicator');
+            const playerListContent = document.getElementById('playerListContent');
+            const playerListDiv = document.getElementById('playerList');
+            const pixelInfoDiv = document.getElementById('pixelInfo');
+            const nicknameContainer = document.getElementById('nicknameContainer');
+            
+            let pixelInfoTimeout = null;
             
             // Инициализация меню
             const tabs = document.querySelectorAll('.tab-btn');
@@ -577,6 +713,7 @@
             const showFpsCheck = document.getElementById('showFPS');
             const clickEffectCheck = document.getElementById('clickEffectCheckbox');
             const eraseWithRightClickCheck = document.getElementById('eraseWithRightClickCheckbox');
+            const showPlayerListCheck = document.getElementById('showPlayerListCheckbox');
             
             settingsBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -595,33 +732,67 @@
             showFpsCheck.addEventListener('change', () => { showFPS = showFpsCheck.checked; fpsDiv.style.display = showFPS ? 'block' : 'none'; });
             clickEffectCheck.addEventListener('change', () => { clickEffect = clickEffectCheck.checked; });
             eraseWithRightClickCheck.addEventListener('change', () => { eraseWithRightClick = eraseWithRightClickCheck.checked; });
+            showPlayerListCheck.addEventListener('change', () => { 
+                showPlayerList = showPlayerListCheck.checked; 
+                playerListDiv.style.display = showPlayerList ? 'block' : 'none';
+            });
             
             fpsDiv.style.display = 'none';
             
-            // Проверка URL параметров при загрузке
+            // Сохранение ника из меню
+            menuNicknameInput.addEventListener('change', () => {
+                const newName = menuNicknameInput.value.trim();
+                if (newName) {
+                    currentPlayerName = newName;
+                    localStorage.setItem('pixelBattleNick', newName);
+                    nicknameInput.value = newName;
+                }
+            });
+            
+            // Сохранение ника в игре
+            document.getElementById('saveNicknameBtn').addEventListener('click', () => {
+                const newName = nicknameInput.value.trim();
+                if (newName) {
+                    currentPlayerName = newName;
+                    localStorage.setItem('pixelBattleNick', newName);
+                    menuNicknameInput.value = newName;
+                    nicknameContainer.style.display = 'none';
+                    
+                    if (ws && ws.readyState === WebSocket.OPEN && currentServerId) {
+                        ws.send(JSON.stringify({ type: 'change_name', name: newName }));
+                    }
+                }
+            });
+            
+            document.getElementById('changeNickBtn').addEventListener('click', () => {
+                nicknameContainer.style.display = 'flex';
+                nicknameInput.focus();
+            });
+            
+            // Проверка URL параметров
             function checkUrlParams() {
                 const params = new URLSearchParams(window.location.search);
                 const serverId = params.get('server');
                 const code = params.get('code');
                 
                 if (serverId && code) {
-                    // Автоматический вход по ссылке
                     setTimeout(() => {
                         if (ws && ws.readyState === WebSocket.OPEN) {
                             ws.send(JSON.stringify({
                                 type: 'join_server',
                                 serverId: serverId,
-                                accessCode: code
+                                accessCode: code,
+                                playerName: currentPlayerName || 'Гость'
                             }));
                         }
                     }, 500);
                 } else if (serverId) {
-                    // Публичный сервер по ссылке
                     setTimeout(() => {
                         if (ws && ws.readyState === WebSocket.OPEN) {
                             ws.send(JSON.stringify({
                                 type: 'join_server',
-                                serverId: serverId
+                                serverId: serverId,
+                                playerName: currentPlayerName || 'Гость'
                             }));
                         }
                     }, 500);
@@ -655,22 +826,22 @@
                         } else if (msg.type === 'pixel_update') {
                             handlePixelUpdate(msg);
                         } else if (msg.type === 'player_joined') {
-                            playerCount = msg.playerCount;
-                            updatePlayersCount();
+                            handlePlayerJoined(msg);
                         } else if (msg.type === 'player_left') {
-                            playerCount = msg.playerCount;
-                            updatePlayersCount();
+                            handlePlayerLeft(msg);
+                        } else if (msg.type === 'player_name_changed') {
+                            handleNameChanged(msg);
                         } else if (msg.type === 'server_closed') {
                             alert('🛑 Сервер был закрыт создателем');
                             backToMenu();
                         } else if (msg.type === 'servers_by_code') {
-                            // Ответ на поиск по коду
                             if (msg.servers && msg.servers.length > 0) {
                                 const server = msg.servers[0];
                                 ws.send(JSON.stringify({
                                     type: 'join_server',
                                     serverId: server.id,
-                                    accessCode: msg.code
+                                    accessCode: msg.code,
+                                    playerName: currentPlayerName || 'Гость'
                                 }));
                             } else {
                                 document.getElementById('joinResult').innerHTML = '<div class="error-message">❌ Сервер с таким кодом не найден</div>';
@@ -723,7 +894,6 @@
             
             window.joinServerById = function(serverId, isPrivate) {
                 if (isPrivate) {
-                    // Для приватного - запрашиваем код
                     const code = prompt('🔑 Введите код доступа к приватному серверу:');
                     if (!code) return;
                     
@@ -731,20 +901,21 @@
                         ws.send(JSON.stringify({
                             type: 'join_server',
                             serverId: serverId,
-                            accessCode: code.toUpperCase()
+                            accessCode: code.toUpperCase(),
+                            playerName: currentPlayerName || 'Гость'
                         }));
                     }
                 } else {
                     if (ws && ws.readyState === WebSocket.OPEN) {
                         ws.send(JSON.stringify({
                             type: 'join_server',
-                            serverId: serverId
+                            serverId: serverId,
+                            playerName: currentPlayerName || 'Гость'
                         }));
                     }
                 }
             };
             
-            // Создание сервера
             document.getElementById('createServerBtn').addEventListener('click', () => {
                 const name = document.getElementById('serverNameInput').value.trim() || 'Pixel Battle';
                 const isPrivate = document.getElementById('privateServerCheckbox').checked;
@@ -782,9 +953,9 @@
                             <button class="copy-btn" onclick="navigator.clipboard.writeText('${inviteLink}')" style="margin-top: 5px;">📋 Ссылка</button>
                         </div>
                         <p style="color: #aaccff; margin: 15px 0; font-size: 13px;">
-                            Отправьте код или ссылку друзьям для входа
+                            Отправьте код или ссылку друзьям
                         </p>
-                        <button class="action-btn" onclick="window.joinServerById('${serverId}', true)">🎮 Войти в игру</button>
+                        <button class="action-btn" onclick="window.joinServerById('${serverId}', true)">🎮 Войти</button>
                     `;
                 } else {
                     const inviteLink = `${baseUrl}?server=${serverId}`;
@@ -794,7 +965,7 @@
                             🔗 ${inviteLink}
                             <button class="copy-btn" onclick="navigator.clipboard.writeText('${inviteLink}')">📋 Копировать</button>
                         </div>
-                        <button class="action-btn" onclick="window.joinServerById('${serverId}', false)">🎮 Войти в игру</button>
+                        <button class="action-btn" onclick="window.joinServerById('${serverId}', false)">🎮 Войти</button>
                     `;
                 }
                 
@@ -802,7 +973,6 @@
                 document.getElementById('createServerBtn').textContent = '🚀 Создать';
             }
             
-            // Вход по коду
             document.getElementById('joinByCodeBtn').addEventListener('click', () => {
                 const code = document.getElementById('accessCodeInput').value.trim().toUpperCase();
                 
@@ -815,10 +985,7 @@
                 document.getElementById('joinByCodeBtn').textContent = '⏳ Поиск...';
                 
                 if (ws && ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({
-                        type: 'find_server_by_code',
-                        code: code
-                    }));
+                    ws.send(JSON.stringify({ type: 'find_server_by_code', code: code }));
                 }
             });
             
@@ -832,38 +999,95 @@
                 document.getElementById('joinByCodeBtn').textContent = '🔗 Подключиться';
             }
             
-            // Запуск игры
             function startGame(msg) {
                 currentServerId = msg.serverId;
                 currentPlayerId = msg.playerId;
                 serverInfo = msg.serverInfo;
                 playerCount = msg.serverInfo.players;
                 
-                // Очищаем кеш
                 for (let key in pixelCache) delete pixelCache[key];
                 
-                // Загружаем пиксели
                 if (msg.pixels) {
-                    msg.pixels.forEach(item => {
-                        const parts = item.split(':');
-                        if (parts.length >= 3) {
-                            const x = parts[0], y = parts[1], color = parts[2];
-                            if (color && color !== 'null' && color !== 'undefined') {
-                                pixelCache[x + ':' + y] = color;
-                            }
+                    msg.pixels.forEach(p => {
+                        if (p.color && p.color !== 'null') {
+                            const parts = p.key ? p.key.split(':') : [p.x, p.y];
+                            pixelCache[parts[0] + ':' + parts[1]] = p.color;
                         }
                     });
                 }
                 
-                // Переключаем интерфейс
+                players.clear();
+                if (msg.players) {
+                    msg.players.forEach(p => players.set(p.id, p.name));
+                }
+                updatePlayerList();
+                updatePlayersCount();
+                
+                camera.x = 500000;
+                camera.y = 500000;
+                camera.zoom = 1.0;
+                
                 menuContainer.classList.add('hidden');
                 gameContainer.classList.remove('hidden');
                 
+                if (!currentPlayerName) {
+                    nicknameContainer.style.display = 'flex';
+                    nicknameInput.focus();
+                } else {
+                    nicknameContainer.style.display = 'none';
+                }
+                
                 gameStatus.textContent = `🟢 ${playerCount} игроков`;
                 serverNameDisplay.textContent = escapeHtml(serverInfo.name);
-                updatePlayersCount();
                 
                 initGame();
+            }
+            
+            function handlePlayerJoined(msg) {
+                players.set(msg.playerId, msg.playerName);
+                if (msg.players) {
+                    players.clear();
+                    msg.players.forEach(p => players.set(p.id, p.name));
+                }
+                playerCount = msg.playerCount;
+                updatePlayerList();
+                updatePlayersCount();
+                gameStatus.textContent = `🟢 ${playerCount}/${serverInfo.maxPlayers} игроков`;
+            }
+            
+            function handlePlayerLeft(msg) {
+                players.delete(msg.playerId);
+                if (msg.players) {
+                    players.clear();
+                    msg.players.forEach(p => players.set(p.id, p.name));
+                }
+                playerCount = msg.playerCount;
+                updatePlayerList();
+                updatePlayersCount();
+                gameStatus.textContent = `🟢 ${playerCount}/${serverInfo.maxPlayers} игроков`;
+            }
+            
+            function handleNameChanged(msg) {
+                players.set(msg.playerId, msg.newName);
+                if (msg.players) {
+                    players.clear();
+                    msg.players.forEach(p => players.set(p.id, p.name));
+                }
+                updatePlayerList();
+            }
+            
+            function updatePlayerList() {
+                if (!showPlayerList) return;
+                
+                if (players.size === 0) {
+                    playerListContent.innerHTML = '<div class="player-item" style="color: #888;">Нет игроков</div>';
+                    return;
+                }
+                
+                const sorted = Array.from(players.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+                playerListContent.innerHTML = sorted.map(([id, name]) => 
+                    `<div class="player-item">${escapeHtml(name)}</div>`
+                ).join('');
             }
             
             function initGame() {
@@ -905,32 +1129,26 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
                 const w = canvas.width, h = canvas.height;
-                const worldWidth = w / camera.zoom;
-                const worldHeight = h / camera.zoom;
+                const pixelsPerScreenX = w / camera.zoom;
+                const pixelsPerScreenY = h / camera.zoom;
                 
-                const startX = Math.floor(camera.x - worldWidth / 2);
-                const startY = Math.floor(camera.y - worldHeight / 2);
-                const endX = Math.ceil(camera.x + worldWidth / 2);
-                const endY = Math.ceil(camera.y + worldHeight / 2);
+                const startPixelX = Math.floor(camera.x - pixelsPerScreenX / 2);
+                const startPixelY = Math.floor(camera.y - pixelsPerScreenY / 2);
+                const endPixelX = Math.ceil(camera.x + pixelsPerScreenX / 2);
+                const endPixelY = Math.ceil(camera.y + pixelsPerScreenY / 2);
                 
-                const tileStartX = Math.max(0, Math.floor(startX / PIXEL_SIZE) - 1);
-                const tileStartY = Math.max(0, Math.floor(startY / PIXEL_SIZE) - 1);
-                const tileEndX = Math.min(MAP_SIZE, Math.ceil(endX / PIXEL_SIZE) + 1);
-                const tileEndY = Math.min(MAP_SIZE, Math.ceil(endY / PIXEL_SIZE) + 1);
+                const minX = Math.max(0, startPixelX - 1);
+                const minY = Math.max(0, startPixelY - 1);
+                const maxX = Math.min(MAP_SIZE, endPixelX + 1);
+                const maxY = Math.min(MAP_SIZE, endPixelY + 1);
                 
-                const zoom = camera.zoom;
-                const camX = camera.x;
-                const camY = camera.y;
-                const halfW = w / 2;
-                const halfH = h / 2;
-                
-                for (let tx = tileStartX; tx < tileEndX; tx++) {
-                    for (let ty = tileStartY; ty < tileEndY; ty++) {
-                        const color = pixelCache[tx + ':' + ty];
+                for (let px = minX; px < maxX; px++) {
+                    for (let py = minY; py < maxY; py++) {
+                        const color = pixelCache[px + ':' + py];
                         if (color) {
-                            const screenX = (tx * PIXEL_SIZE - camX) * zoom + halfW;
-                            const screenY = (ty * PIXEL_SIZE - camY) * zoom + halfH;
-                            const size = Math.max(1, PIXEL_SIZE * zoom);
+                            const screenX = (px - camera.x) * camera.zoom + w / 2;
+                            const screenY = (py - camera.y) * camera.zoom + h / 2;
+                            const size = Math.max(1, camera.zoom);
                             
                             if (screenX + size > 0 && screenX < w && screenY + size > 0 && screenY < h) {
                                 ctx.fillStyle = color;
@@ -940,11 +1158,10 @@
                     }
                 }
                 
-                if (showGrid) {
-                    drawGrid(tileStartX, tileEndX, tileStartY, tileEndY);
+                if (showGrid && camera.zoom > 0.5) {
+                    drawGrid(minX, maxX, minY, maxY);
                 }
                 
-                // FPS
                 frameCount++;
                 const now = performance.now();
                 if (now - lastFpsUpdate >= 500) {
@@ -960,35 +1177,28 @@
                 updateCoordsLabel();
             }
             
-            function drawGrid(startX, endX, startY, endY) {
+            function drawGrid(minX, maxX, minY, maxY) {
                 if (camera.zoom < 0.5) return;
                 
                 ctx.beginPath();
                 ctx.strokeStyle = gridColor;
                 ctx.lineWidth = Math.max(0.5, 1 / camera.zoom);
                 
-                const step = PIXEL_SIZE;
-                const camX = camera.x;
-                const camY = camera.y;
-                const halfW = canvas.width / 2;
-                const halfH = canvas.height / 2;
+                const w = canvas.width, h = canvas.height;
                 
-                const firstX = Math.floor(startX / step) * step;
-                const firstY = Math.floor(startY / step) * step;
-                
-                for (let x = firstX; x <= endX * step; x += step) {
-                    const screenX = (x - camX) * camera.zoom + halfW;
-                    if (screenX >= 0 && screenX <= canvas.width) {
+                for (let x = minX; x <= maxX; x++) {
+                    const screenX = (x - camera.x) * camera.zoom + w / 2;
+                    if (screenX >= 0 && screenX <= w) {
                         ctx.moveTo(screenX, 0);
-                        ctx.lineTo(screenX, canvas.height);
+                        ctx.lineTo(screenX, h);
                     }
                 }
                 
-                for (let y = firstY; y <= endY * step; y += step) {
-                    const screenY = (y - camY) * camera.zoom + halfH;
-                    if (screenY >= 0 && screenY <= canvas.height) {
+                for (let y = minY; y <= maxY; y++) {
+                    const screenY = (y - camera.y) * camera.zoom + h / 2;
+                    if (screenY >= 0 && screenY <= h) {
                         ctx.moveTo(0, screenY);
-                        ctx.lineTo(canvas.width, screenY);
+                        ctx.lineTo(w, screenY);
                     }
                 }
                 ctx.stroke();
@@ -1002,18 +1212,28 @@
                     pixelCache[key] = msg.color;
                 }
                 requestRender();
+                
+                if (msg.author) {
+                    pixelInfoDiv.innerHTML = `🎨 ${escapeHtml(msg.author)} поставил пиксель`;
+                    pixelInfoDiv.classList.add('visible');
+                    
+                    if (pixelInfoTimeout) clearTimeout(pixelInfoTimeout);
+                    pixelInfoTimeout = setTimeout(() => {
+                        pixelInfoDiv.classList.remove('visible');
+                    }, 3000);
+                }
             }
             
             function placePixel(isErase = false) {
                 if (!currentServerId) return;
                 
-                const tileX = Math.floor(mouseWorldX / PIXEL_SIZE);
-                const tileY = Math.floor(mouseWorldY / PIXEL_SIZE);
+                const px = Math.floor(mousePixelX);
+                const py = Math.floor(mousePixelY);
                 
-                if (tileX < 0 || tileX >= MAP_SIZE || tileY < 0 || tileY >= MAP_SIZE) return;
+                if (px < 0 || px >= MAP_SIZE || py < 0 || py >= MAP_SIZE) return;
                 
                 const color = isErase ? null : currentColor;
-                const key = tileX + ':' + tileY;
+                const key = px + ':' + py;
                 
                 if (color === null) {
                     delete pixelCache[key];
@@ -1025,17 +1245,16 @@
                 if (ws && ws.readyState === WebSocket.OPEN) {
                     ws.send(JSON.stringify({
                         type: 'place_pixel',
-                        x: tileX,
-                        y: tileY,
+                        x: px,
+                        y: py,
                         color: color
                     }));
                 }
                 
-                // Эффект
                 if (clickEffect) {
                     const rect = canvas.getBoundingClientRect();
-                    const screenX = (tileX * PIXEL_SIZE - camera.x) * camera.zoom + canvas.width / 2;
-                    const screenY = (tileY * PIXEL_SIZE - camera.y) * camera.zoom + canvas.height / 2;
+                    const screenX = (px - camera.x) * camera.zoom + canvas.width / 2;
+                    const screenY = (py - camera.y) * camera.zoom + canvas.height / 2;
                     
                     const ripple = document.createElement('div');
                     ripple.className = isErase ? 'erase-ripple' : 'click-ripple';
@@ -1070,11 +1289,11 @@
                 const screenX = e.clientX - rect.left;
                 const screenY = e.clientY - rect.top;
                 
-                mouseWorldX = (screenX - canvas.width / 2) / camera.zoom + camera.x;
-                mouseWorldY = (screenY - canvas.height / 2) / camera.zoom + camera.y;
+                mousePixelX = (screenX - canvas.width / 2) / camera.zoom + camera.x;
+                mousePixelY = (screenY - canvas.height / 2) / camera.zoom + camera.y;
                 
-                mouseWorldX = Math.max(0, Math.min(MAP_SIZE * PIXEL_SIZE - 1, mouseWorldX));
-                mouseWorldY = Math.max(0, Math.min(MAP_SIZE * PIXEL_SIZE - 1, mouseWorldY));
+                mousePixelX = Math.max(0, Math.min(MAP_SIZE - 1, mousePixelX));
+                mousePixelY = Math.max(0, Math.min(MAP_SIZE - 1, mousePixelY));
                 
                 updateCoordsLabel();
                 
@@ -1091,12 +1310,9 @@
             
             function onMouseDown(e) {
                 if (e.button === 0) {
-                    const shouldErase = isEraseMode || ctrlPressed;
-                    placePixel(shouldErase);
+                    placePixel(isEraseMode || ctrlPressed);
                 } else if (e.button === 2) {
-                    if (eraseWithRightClick) {
-                        placePixel(true);
-                    }
+                    if (eraseWithRightClick) placePixel(true);
                     e.preventDefault();
                 } else if (e.button === 1) {
                     isPanning = true;
@@ -1121,31 +1337,29 @@
                 const mouseX = e.clientX - rect.left;
                 const mouseY = e.clientY - rect.top;
                 
-                const beforeX = (mouseX - canvas.width / 2) / camera.zoom + camera.x;
-                const beforeY = (mouseY - canvas.height / 2) / camera.zoom + camera.y;
+                const pixelBeforeX = (mouseX - canvas.width / 2) / camera.zoom + camera.x;
+                const pixelBeforeY = (mouseY - canvas.height / 2) / camera.zoom + camera.y;
                 
                 camera.zoom *= (e.deltaY > 0) ? 0.9 : 1.1;
-                camera.zoom = Math.min(30, Math.max(0.2, camera.zoom));
+                camera.zoom = Math.min(50, Math.max(0.2, camera.zoom));
                 
-                const afterX = (mouseX - canvas.width / 2) / camera.zoom + camera.x;
-                const afterY = (mouseY - canvas.height / 2) / camera.zoom + camera.y;
+                const pixelAfterX = (mouseX - canvas.width / 2) / camera.zoom + camera.x;
+                const pixelAfterY = (mouseY - canvas.height / 2) / camera.zoom + camera.y;
                 
-                camera.x += beforeX - afterX;
-                camera.y += beforeY - afterY;
+                camera.x += pixelBeforeX - pixelAfterX;
+                camera.y += pixelBeforeY - pixelAfterY;
+                
                 requestRender();
             }
             
             function updateCoordsLabel() {
-                const tileX = Math.floor(mouseWorldX / PIXEL_SIZE);
-                const tileY = Math.floor(mouseWorldY / PIXEL_SIZE);
-                coordsDiv.innerHTML = `X: ${tileX} Y: ${tileY} | 🔍 ${camera.zoom.toFixed(1)}x`;
+                const px = Math.floor(mousePixelX);
+                const py = Math.floor(mousePixelY);
+                coordsDiv.innerHTML = `X: ${px} Y: ${py} | 🔍 ${camera.zoom.toFixed(1)}x`;
             }
             
             function updatePlayersCount() {
                 playersCountDiv.textContent = `👥 ${playerCount} ${playerCount === 1 ? 'игрок' : (playerCount < 5 ? 'игрока' : 'игроков')}`;
-                if (serverInfo) {
-                    gameStatus.textContent = `🟢 ${playerCount}/${serverInfo.maxPlayers} игроков`;
-                }
             }
             
             function buildPalette() {
@@ -1221,23 +1435,23 @@
                 currentServerId = null;
                 currentPlayerId = null;
                 serverInfo = null;
+                players.clear();
                 gameContainer.classList.add('hidden');
                 menuContainer.classList.remove('hidden');
+                nicknameContainer.style.display = 'none';
                 loadServerList();
-                
-                // Очищаем URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
             
             document.getElementById('backBtn').addEventListener('click', backToMenu);
             
             function escapeHtml(text) {
+                if (!text) return '';
                 const div = document.createElement('div');
                 div.textContent = text;
                 return div.innerHTML;
             }
             
-            // Запуск
             connectToMaster();
             
             setInterval(() => {
