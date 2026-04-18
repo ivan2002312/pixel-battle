@@ -2,6 +2,7 @@ const WebSocket = require('ws');
 const http = require('http');
 const crypto = require('crypto');
 
+// Railway назначает порт через process.env.PORT
 const PORT = process.env.PORT || 3000;
 
 // Хранилище серверов
@@ -16,8 +17,27 @@ function generateAccessCode() {
     return crypto.randomBytes(3).toString('hex').toUpperCase();
 }
 
-// HTTP сервер
+// HTTP сервер (ОБЯЗАТЕЛЬНО для Railway health-check)
 const server = http.createServer((req, res) => {
+    // Health-check для Railway
+    if (req.url === '/health') {
+        res.writeHead(200);
+        res.end('OK');
+        return;
+    }
+    
+    // Статистика
+    if (req.url === '/stats') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            totalServers: servers.size,
+            publicServers: publicServers.size,
+            totalPlayers: Array.from(servers.values()).reduce((acc, s) => acc + s.info.players, 0)
+        }));
+        return;
+    }
+    
+    // Список серверов
     if (req.url === '/servers') {
         const publicList = Array.from(publicServers.values()).map(s => ({
             id: s.info.id,
@@ -29,20 +49,47 @@ const server = http.createServer((req, res) => {
         }));
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(publicList));
-    } else if (req.url === '/stats') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-            totalServers: servers.size,
-            publicServers: publicServers.size,
-            totalPlayers: Array.from(servers.values()).reduce((acc, s) => acc + s.info.players, 0)
-        }));
-    } else {
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end('<h1>🎮 Pixel Battle Master Server</h1><p>WebSocket: wss://' + req.headers.host + '</p>');
+        return;
     }
+    
+    // Главная страница
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Pixel Battle Master Server</title>
+            <style>
+                body { 
+                    background: #1a1a2e; 
+                    color: #e0e0ff; 
+                    font-family: Arial; 
+                    display: flex; 
+                    justify-content: center; 
+                    align-items: center; 
+                    height: 100vh; 
+                    margin: 0;
+                }
+                .container { text-align: center; }
+                h1 { color: #bbbbff; }
+                .status { color: #aaffaa; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🎮 Pixel Battle Master Server</h1>
+                <p class="status">✅ Сервер работает</p>
+                <p>📊 <a href="/stats" style="color: #aaccff;">Статистика</a> | <a href="/servers" style="color: #aaccff;">Список серверов</a></p>
+                <p>🔌 WebSocket: wss://${req.headers.host}</p>
+            </div>
+        </body>
+        </html>
+    `);
 });
 
 const wss = new WebSocket.Server({ server });
+
+console.log('🚀 Мастер-сервер запускается...');
 
 wss.on('connection', (ws) => {
     console.log('📡 Новое подключение');
@@ -90,7 +137,7 @@ wss.on('connection', (ws) => {
                     serverInfo: serverInfo
                 }));
                 
-                console.log(`🆕 Сервер: ${serverInfo.name} (${serverId})`);
+                console.log(`🆕 Сервер создан: ${serverInfo.name} (${serverId})`);
                 broadcastServerList();
             }
             
@@ -119,7 +166,7 @@ wss.on('connection', (ws) => {
                 }
                 
                 if (server.info.isPrivate && server.info.accessCode !== data.accessCode) {
-                    ws.send(JSON.stringify({ type: 'error', message: 'Неверный код' }));
+                    ws.send(JSON.stringify({ type: 'error', message: 'Неверный код доступа' }));
                     return;
                 }
                 
@@ -152,6 +199,7 @@ wss.on('connection', (ws) => {
                 }, currentPlayerId);
                 
                 broadcastServerList();
+                console.log(`👤 Игрок подключился к серверу ${server.info.name} (${server.info.players}/${server.info.maxPlayers})`);
             }
             
             // Размещение пикселя
@@ -186,7 +234,7 @@ wss.on('connection', (ws) => {
             }
             
         } catch (e) {
-            console.error('Ошибка:', e);
+            console.error('Ошибка:', e.message);
         }
     });
     
@@ -195,7 +243,9 @@ wss.on('connection', (ws) => {
             const server = servers.get(currentServerId);
             if (server) {
                 server.players.forEach((playerWs) => {
-                    playerWs.send(JSON.stringify({ type: 'server_closed' }));
+                    if (playerWs.readyState === WebSocket.OPEN) {
+                        playerWs.send(JSON.stringify({ type: 'server_closed' }));
+                    }
                 });
                 servers.delete(currentServerId);
                 publicServers.delete(currentServerId);
@@ -221,6 +271,7 @@ function leaveServer(serverId, playerId) {
     });
     
     broadcastServerList();
+    console.log(`👋 Игрок покинул сервер ${serverId} (осталось ${server.info.players})`);
 }
 
 function broadcastToServer(serverId, message, excludePlayerId = null) {
@@ -253,6 +304,26 @@ function broadcastServerList() {
     });
 }
 
-server.listen(PORT, () => {
-    console.log(`🎮 Мастер-сервер на порту ${PORT}`);
+// Запуск сервера
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`🎮 Мастер-сервер запущен на порту ${PORT}`);
+    console.log(`📊 Статистика: http://localhost:${PORT}/stats`);
+    console.log(`💚 Health-check: http://localhost:${PORT}/health`);
+});
+
+// Обработка сигналов завершения
+process.on('SIGTERM', () => {
+    console.log('🛑 Получен SIGTERM, закрываем сервер...');
+    server.close(() => {
+        console.log('✅ Сервер остановлен');
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('🛑 Получен SIGINT, закрываем сервер...');
+    server.close(() => {
+        console.log('✅ Сервер остановлен');
+        process.exit(0);
+    });
 });
