@@ -4,6 +4,7 @@ const crypto = require('crypto');
 
 const PORT = process.env.PORT || 3000;
 
+// Хранилище серверов
 const servers = new Map();
 const publicServers = new Map();
 const serversByCode = new Map();
@@ -16,7 +17,17 @@ function generateAccessCode() {
     return crypto.randomBytes(3).toString('hex').toUpperCase();
 }
 
+// HTTP сервер
 const server = http.createServer((req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    
+    if (req.method === 'OPTIONS') {
+        res.writeHead(200);
+        res.end();
+        return;
+    }
+    
     if (req.url === '/health') {
         res.writeHead(200);
         res.end('OK');
@@ -24,15 +35,18 @@ const server = http.createServer((req, res) => {
     }
     
     if (req.url === '/servers') {
-        const list = Array.from(publicServers.values()).map(s => ({
-            id: s.info.id,
-            name: s.info.name,
-            isPrivate: s.info.isPrivate,
-            players: s.info.players,
-            maxPlayers: s.info.maxPlayers,
-            pixels: s.info.pixels
-        }));
-        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        const list = [];
+        publicServers.forEach((s) => {
+            list.push({
+                id: s.info.id,
+                name: s.info.name,
+                isPrivate: false,
+                players: s.info.players,
+                maxPlayers: s.info.maxPlayers,
+                pixels: s.info.pixels
+            });
+        });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(list));
         return;
     }
@@ -48,12 +62,11 @@ wss.on('connection', (ws) => {
     let currentServerId = null;
     let currentPlayerId = null;
     let currentPlayerName = 'Гость';
-    let isServerOwner = false;
 
     ws.on('message', (message) => {
         try {
             const data = JSON.parse(message);
-            console.log('📨 Получено:', data.type);
+            console.log('📨', data.type);
             
             // Создание сервера
             if (data.type === 'create_server') {
@@ -65,24 +78,26 @@ wss.on('connection', (ws) => {
                     name: data.name || 'Pixel Battle',
                     isPrivate: data.isPrivate || false,
                     accessCode: accessCode,
-                    maxPlayers: data.maxPlayers || 50,
+                    maxPlayers: data.maxPlayers || 20,
                     players: 0,
                     pixels: 0
                 };
                 
-                servers.set(serverId, {
+                const newServer = {
                     info: serverInfo,
-                    players: new Map(), // playerId -> { ws, name }
-                    pixels: new Map()    // "x,y" -> { color, author }
-                });
+                    players: new Map(),
+                    pixels: new Map()
+                };
+                
+                servers.set(serverId, newServer);
                 
                 if (!serverInfo.isPrivate) {
-                    publicServers.set(serverId, servers.get(serverId));
-                } else if (accessCode) {
+                    publicServers.set(serverId, newServer);
+                }
+                if (accessCode) {
                     serversByCode.set(accessCode, serverId);
                 }
                 
-                isServerOwner = true;
                 currentServerId = serverId;
                 
                 ws.send(JSON.stringify({
@@ -92,20 +107,43 @@ wss.on('connection', (ws) => {
                     serverInfo: serverInfo
                 }));
                 
+                console.log(`🆕 Сервер: ${serverInfo.name} (${serverId})`);
                 broadcastServerList();
+            }
+            
+            // Список серверов
+            else if (data.type === 'get_servers') {
+                const list = [];
+                publicServers.forEach((s) => {
+                    list.push({
+                        id: s.info.id,
+                        name: s.info.name,
+                        isPrivate: false,
+                        players: s.info.players,
+                        maxPlayers: s.info.maxPlayers,
+                        pixels: s.info.pixels
+                    });
+                });
+                ws.send(JSON.stringify({ type: 'servers_list', servers: list }));
             }
             
             // Подключение к серверу
             else if (data.type === 'join_server') {
+                console.log('🔍 Поиск сервера:', data.serverId);
+                console.log('Доступные серверы:', Array.from(servers.keys()));
+                
                 const server = servers.get(data.serverId);
+                
                 if (!server) {
                     ws.send(JSON.stringify({ type: 'error', message: 'Сервер не найден' }));
                     return;
                 }
                 
-                if (server.info.isPrivate && server.info.accessCode !== data.accessCode) {
-                    ws.send(JSON.stringify({ type: 'error', message: 'Неверный код' }));
-                    return;
+                if (server.info.isPrivate) {
+                    if (server.info.accessCode !== data.accessCode) {
+                        ws.send(JSON.stringify({ type: 'error', message: 'Неверный код' }));
+                        return;
+                    }
                 }
                 
                 currentPlayerId = generateId();
@@ -115,12 +153,12 @@ wss.on('connection', (ws) => {
                 server.players.set(currentPlayerId, { ws, name: currentPlayerName });
                 server.info.players++;
                 
-                // Отправляем все пиксели
+                // Отправляем пиксели
                 const pixels = [];
-                for (let [key, value] of server.pixels.entries()) {
+                server.pixels.forEach((value, key) => {
                     const [x, y] = key.split(',');
-                    pixels.push({ x: parseInt(x), y: parseInt(y), color: value.color, author: value.author });
-                }
+                    pixels.push({ x: parseInt(x), y: parseInt(y), color: value.color });
+                });
                 
                 // Отправляем список игроков
                 const playerList = [];
@@ -135,16 +173,7 @@ wss.on('connection', (ws) => {
                     players: playerList
                 }));
                 
-                // Оповещаем других
-                broadcastToServer(data.serverId, {
-                    type: 'player_joined',
-                    playerId: currentPlayerId,
-                    playerName: currentPlayerName,
-                    playerCount: server.info.players,
-                    players: playerList
-                }, currentPlayerId);
-                
-                broadcastServerList();
+                console.log(`👤 ${currentPlayerName} подключился к ${server.info.name}`);
             }
             
             // Установка пикселя
@@ -154,60 +183,28 @@ wss.on('connection', (ws) => {
                 
                 const x = parseInt(data.x);
                 const y = parseInt(data.y);
-                const color = data.color;
                 const key = `${x},${y}`;
                 
-                if (color === null) {
+                if (data.color === null) {
                     server.pixels.delete(key);
                 } else {
-                    server.pixels.set(key, { color, author: currentPlayerName });
+                    server.pixels.set(key, { color: data.color, author: currentPlayerName });
                 }
                 
                 server.info.pixels = server.pixels.size;
                 
-                broadcastToServer(currentServerId, {
-                    type: 'pixel_update',
-                    x: x,
-                    y: y,
-                    color: color,
-                    author: currentPlayerName
+                // Рассылаем всем игрокам на сервере
+                server.players.forEach((p, id) => {
+                    if (p.ws.readyState === WebSocket.OPEN) {
+                        p.ws.send(JSON.stringify({
+                            type: 'pixel_update',
+                            x: x,
+                            y: y,
+                            color: data.color,
+                            author: currentPlayerName
+                        }));
+                    }
                 });
-            }
-            
-            // Смена ника
-            else if (data.type === 'change_name' && currentServerId && currentPlayerId) {
-                const server = servers.get(currentServerId);
-                if (!server) return;
-                
-                const oldName = currentPlayerName;
-                currentPlayerName = data.name || 'Гость';
-                
-                const playerData = server.players.get(currentPlayerId);
-                if (playerData) playerData.name = currentPlayerName;
-                
-                const playerList = [];
-                server.players.forEach((p, id) => playerList.push({ id, name: p.name }));
-                
-                broadcastToServer(currentServerId, {
-                    type: 'player_name_changed',
-                    playerId: currentPlayerId,
-                    oldName: oldName,
-                    newName: currentPlayerName,
-                    players: playerList
-                });
-            }
-            
-            // Получение списка серверов
-            else if (data.type === 'get_servers') {
-                const list = Array.from(publicServers.values()).map(s => ({
-                    id: s.info.id,
-                    name: s.info.name,
-                    isPrivate: s.info.isPrivate,
-                    players: s.info.players,
-                    maxPlayers: s.info.maxPlayers,
-                    pixels: s.info.pixels
-                }));
-                ws.send(JSON.stringify({ type: 'servers_list', servers: list }));
             }
             
             // Поиск по коду
@@ -218,7 +215,12 @@ wss.on('connection', (ws) => {
                     ws.send(JSON.stringify({
                         type: 'servers_by_code',
                         code: data.code,
-                        servers: [{ id: s.info.id, name: s.info.name, isPrivate: true, players: s.info.players, maxPlayers: s.info.maxPlayers }]
+                        servers: [{ 
+                            id: s.info.id, 
+                            name: s.info.name, 
+                            players: s.info.players, 
+                            maxPlayers: s.info.maxPlayers 
+                        }]
                     }));
                 } else {
                     ws.send(JSON.stringify({ type: 'servers_by_code', code: data.code, servers: [] }));
@@ -231,57 +233,37 @@ wss.on('connection', (ws) => {
     });
     
     ws.on('close', () => {
-        if (isServerOwner && currentServerId) {
+        if (currentServerId) {
             const server = servers.get(currentServerId);
             if (server) {
-                if (server.info.accessCode) serversByCode.delete(server.info.accessCode);
-                servers.delete(currentServerId);
-                publicServers.delete(currentServerId);
-                broadcastServerList();
-            }
-        } else if (currentServerId && currentPlayerId) {
-            const server = servers.get(currentServerId);
-            if (server) {
-                server.players.delete(currentPlayerId);
-                server.info.players--;
-                
-                const playerList = [];
-                server.players.forEach((p, id) => playerList.push({ id, name: p.name }));
-                
-                broadcastToServer(currentServerId, {
-                    type: 'player_left',
-                    playerId: currentPlayerId,
-                    playerName: currentPlayerName,
-                    playerCount: server.info.players,
-                    players: playerList
-                });
-                
-                broadcastServerList();
+                // Если это был создатель сервера
+                if (server.players.size === 1) {
+                    servers.delete(currentServerId);
+                    publicServers.delete(currentServerId);
+                    console.log(`🛑 Сервер удалён: ${currentServerId}`);
+                    broadcastServerList();
+                } else {
+                    server.players.delete(currentPlayerId);
+                    server.info.players--;
+                    console.log(`👋 Игрок покинул сервер`);
+                }
             }
         }
     });
 });
 
-function broadcastToServer(serverId, message, excludeId = null) {
-    const server = servers.get(serverId);
-    if (!server) return;
-    
-    server.players.forEach((p, id) => {
-        if (id !== excludeId && p.ws.readyState === WebSocket.OPEN) {
-            p.ws.send(JSON.stringify(message));
-        }
-    });
-}
-
 function broadcastServerList() {
-    const list = Array.from(publicServers.values()).map(s => ({
-        id: s.info.id,
-        name: s.info.name,
-        isPrivate: s.info.isPrivate,
-        players: s.info.players,
-        maxPlayers: s.info.maxPlayers,
-        pixels: s.info.pixels
-    }));
+    const list = [];
+    publicServers.forEach((s) => {
+        list.push({
+            id: s.info.id,
+            name: s.info.name,
+            isPrivate: false,
+            players: s.info.players,
+            maxPlayers: s.info.maxPlayers,
+            pixels: s.info.pixels
+        });
+    });
     
     wss.clients.forEach(c => {
         if (c.readyState === WebSocket.OPEN) {
@@ -291,5 +273,5 @@ function broadcastServerList() {
 }
 
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`🎮 Сервер на порту ${PORT}`);
+    console.log(`🎮 Сервер запущен на порту ${PORT}`);
 });
