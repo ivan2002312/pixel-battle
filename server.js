@@ -1,6 +1,5 @@
 const WebSocket = require('ws');
 const http = require('http');
-const crypto = require('crypto');
 
 const PORT = process.env.PORT || 3000;
 
@@ -10,11 +9,11 @@ const publicServers = new Map();
 const serversByCode = new Map();
 
 function generateId() {
-    return crypto.randomBytes(8).toString('hex');
+    return Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
 }
 
 function generateAccessCode() {
-    return crypto.randomBytes(3).toString('hex').toUpperCase();
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
 // HTTP сервер
@@ -34,13 +33,23 @@ const server = http.createServer((req, res) => {
         return;
     }
     
+    if (req.url === '/stats') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            totalServers: servers.size,
+            publicServers: publicServers.size,
+            totalPlayers: Array.from(servers.values()).reduce((acc, s) => acc + s.info.players, 0)
+        }));
+        return;
+    }
+    
     if (req.url === '/servers') {
         const list = [];
-        publicServers.forEach((s) => {
+        publicServers.forEach((s, id) => {
             list.push({
-                id: s.info.id,
+                id: id,
                 name: s.info.name,
-                isPrivate: false,
+                isPrivate: s.info.isPrivate || false,
                 players: s.info.players,
                 maxPlayers: s.info.maxPlayers,
                 pixels: s.info.pixels
@@ -48,11 +57,12 @@ const server = http.createServer((req, res) => {
         });
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(list));
+        console.log('📤 /servers вернул', list.length, 'серверов');
         return;
     }
     
     res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end('<h1>Pixel Battle Server</h1>');
+    res.end('<h1>Pixel Battle Master Server</h1><p>WebSocket: wss://' + req.headers.host + '</p>');
 });
 
 const wss = new WebSocket.Server({ server });
@@ -107,18 +117,18 @@ wss.on('connection', (ws) => {
                     serverInfo: serverInfo
                 }));
                 
-                console.log(`🆕 Сервер: ${serverInfo.name} (${serverId})`);
                 broadcastServerList();
+                console.log('✅ Сервер создан:', serverInfo.name);
             }
             
             // Список серверов
             else if (data.type === 'get_servers') {
                 const list = [];
-                publicServers.forEach((s) => {
+                publicServers.forEach((s, id) => {
                     list.push({
-                        id: s.info.id,
+                        id: id,
                         name: s.info.name,
-                        isPrivate: false,
+                        isPrivate: s.info.isPrivate,
                         players: s.info.players,
                         maxPlayers: s.info.maxPlayers,
                         pixels: s.info.pixels
@@ -129,9 +139,6 @@ wss.on('connection', (ws) => {
             
             // Подключение к серверу
             else if (data.type === 'join_server') {
-                console.log('🔍 Поиск сервера:', data.serverId);
-                console.log('Доступные серверы:', Array.from(servers.keys()));
-                
                 const server = servers.get(data.serverId);
                 
                 if (!server) {
@@ -139,11 +146,9 @@ wss.on('connection', (ws) => {
                     return;
                 }
                 
-                if (server.info.isPrivate) {
-                    if (server.info.accessCode !== data.accessCode) {
-                        ws.send(JSON.stringify({ type: 'error', message: 'Неверный код' }));
-                        return;
-                    }
+                if (server.info.isPrivate && server.info.accessCode !== data.accessCode) {
+                    ws.send(JSON.stringify({ type: 'error', message: 'Неверный код' }));
+                    return;
                 }
                 
                 currentPlayerId = generateId();
@@ -151,16 +156,14 @@ wss.on('connection', (ws) => {
                 currentServerId = data.serverId;
                 
                 server.players.set(currentPlayerId, { ws, name: currentPlayerName });
-                server.info.players++;
+                server.info.players = server.players.size;
                 
-                // Отправляем пиксели
                 const pixels = [];
                 server.pixels.forEach((value, key) => {
                     const [x, y] = key.split(',');
                     pixels.push({ x: parseInt(x), y: parseInt(y), color: value.color });
                 });
                 
-                // Отправляем список игроков
                 const playerList = [];
                 server.players.forEach((p, id) => playerList.push({ id, name: p.name }));
                 
@@ -173,7 +176,54 @@ wss.on('connection', (ws) => {
                     players: playerList
                 }));
                 
-                console.log(`👤 ${currentPlayerName} подключился к ${server.info.name}`);
+                server.players.forEach((p, id) => {
+                    if (id !== currentPlayerId && p.ws.readyState === WebSocket.OPEN) {
+                        p.ws.send(JSON.stringify({
+                            type: 'player_joined',
+                            playerId: currentPlayerId,
+                            playerName: currentPlayerName,
+                            playerCount: server.info.players,
+                            players: playerList
+                        }));
+                    }
+                });
+                
+                broadcastServerList();
+            }
+            
+            // Выход из сервера
+            else if (data.type === 'leave_server') {
+                if (currentServerId && currentPlayerId) {
+                    const server = servers.get(currentServerId);
+                    if (server) {
+                        server.players.delete(currentPlayerId);
+                        server.info.players = server.players.size;
+                        
+                        const playerList = [];
+                        server.players.forEach((p, id) => playerList.push({ id, name: p.name }));
+                        
+                        server.players.forEach((p) => {
+                            if (p.ws.readyState === WebSocket.OPEN) {
+                                p.ws.send(JSON.stringify({
+                                    type: 'player_left',
+                                    playerId: currentPlayerId,
+                                    playerName: currentPlayerName,
+                                    playerCount: server.info.players,
+                                    players: playerList
+                                }));
+                            }
+                        });
+                        
+                        if (server.players.size === 0) {
+                            if (server.info.accessCode) serversByCode.delete(server.info.accessCode);
+                            servers.delete(currentServerId);
+                            publicServers.delete(currentServerId);
+                        }
+                        broadcastServerList();
+                    }
+                }
+                currentServerId = null;
+                currentPlayerId = null;
             }
             
             // Установка пикселя
@@ -193,8 +243,7 @@ wss.on('connection', (ws) => {
                 
                 server.info.pixels = server.pixels.size;
                 
-                // Рассылаем всем игрокам на сервере
-                server.players.forEach((p, id) => {
+                server.players.forEach((p) => {
                     if (p.ws.readyState === WebSocket.OPEN) {
                         p.ws.send(JSON.stringify({
                             type: 'pixel_update',
@@ -202,6 +251,33 @@ wss.on('connection', (ws) => {
                             y: y,
                             color: data.color,
                             author: currentPlayerName
+                        }));
+                    }
+                });
+            }
+            
+            // Смена ника
+            else if (data.type === 'change_name' && currentServerId) {
+                const server = servers.get(currentServerId);
+                if (!server) return;
+                
+                const oldName = currentPlayerName;
+                currentPlayerName = data.name || 'Гость';
+                
+                const playerData = server.players.get(currentPlayerId);
+                if (playerData) playerData.name = currentPlayerName;
+                
+                const playerList = [];
+                server.players.forEach((p, id) => playerList.push({ id, name: p.name }));
+                
+                server.players.forEach((p) => {
+                    if (p.ws.readyState === WebSocket.OPEN) {
+                        p.ws.send(JSON.stringify({
+                            type: 'player_name_changed',
+                            playerId: currentPlayerId,
+                            oldName: oldName,
+                            newName: currentPlayerName,
+                            players: playerList
                         }));
                     }
                 });
@@ -216,7 +292,7 @@ wss.on('connection', (ws) => {
                         type: 'servers_by_code',
                         code: data.code,
                         servers: [{ 
-                            id: s.info.id, 
+                            id: serverId, 
                             name: s.info.name, 
                             players: s.info.players, 
                             maxPlayers: s.info.maxPlayers 
@@ -233,63 +309,45 @@ wss.on('connection', (ws) => {
     });
     
     ws.on('close', () => {
-    console.log('🔌 Соединение закрыто, playerId:', currentPlayerId);
-    
-    if (currentServerId && currentPlayerId) {
-        const server = servers.get(currentServerId);
-        if (server) {
-            // Удаляем игрока
-            server.players.delete(currentPlayerId);
-            server.info.players = server.players.size;
-            
-            console.log(`👋 Игрок ${currentPlayerName} покинул сервер. Осталось: ${server.info.players}`);
-            
-            // Обновляем список игроков
-            const playerList = [];
-            server.players.forEach((p, id) => playerList.push({ id, name: p.name }));
-            
-            // Оповещаем остальных
-            server.players.forEach((p, id) => {
-                if (p.ws.readyState === WebSocket.OPEN) {
-                    p.ws.send(JSON.stringify({
-                        type: 'player_left',
-                        playerId: currentPlayerId,
-                        playerName: currentPlayerName,
-                        playerCount: server.info.players,
-                        players: playerList
-                    }));
+        if (currentServerId && currentPlayerId) {
+            const server = servers.get(currentServerId);
+            if (server) {
+                server.players.delete(currentPlayerId);
+                server.info.players = server.players.size;
+                
+                const playerList = [];
+                server.players.forEach((p, id) => playerList.push({ id, name: p.name }));
+                
+                server.players.forEach((p) => {
+                    if (p.ws.readyState === WebSocket.OPEN) {
+                        p.ws.send(JSON.stringify({
+                            type: 'player_left',
+                            playerId: currentPlayerId,
+                            playerName: currentPlayerName,
+                            playerCount: server.info.players,
+                            players: playerList
+                        }));
+                    }
+                });
+                
+                if (server.players.size === 0) {
+                    if (server.info.accessCode) serversByCode.delete(server.info.accessCode);
+                    servers.delete(currentServerId);
+                    publicServers.delete(currentServerId);
+                    broadcastServerList();
                 }
-            });
-            
-            // Если сервер пуст и это не создатель - можно удалить
-            // (создатель удаляется только при закрытии его соединения)
-        }
-    }
-    
-    // Если это был создатель сервера - удаляем сервер
-    if (currentServerId && servers.has(currentServerId)) {
-        const server = servers.get(currentServerId);
-        // Проверяем, есть ли ещё игроки
-        if (server.players.size === 0) {
-            // Удаляем сервер
-            if (server.info.accessCode) {
-                serversByCode.delete(server.info.accessCode);
             }
-            servers.delete(currentServerId);
-            publicServers.delete(currentServerId);
-            broadcastServerList();
-            console.log(`🛑 Сервер ${currentServerId} удалён (нет игроков)`);
         }
-    }
+    });
 });
 
 function broadcastServerList() {
     const list = [];
-    publicServers.forEach((s) => {
+    publicServers.forEach((s, id) => {
         list.push({
-            id: s.info.id,
+            id: id,
             name: s.info.name,
-            isPrivate: false,
+            isPrivate: s.info.isPrivate,
             players: s.info.players,
             maxPlayers: s.info.maxPlayers,
             pixels: s.info.pixels
@@ -304,5 +362,5 @@ function broadcastServerList() {
 }
 
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`🎮 Сервер запущен на порту ${PORT}`);
+    console.log('🎮 Сервер запущен на порту', PORT);
 });
