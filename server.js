@@ -233,23 +233,54 @@ wss.on('connection', (ws) => {
     });
     
     ws.on('close', () => {
-        if (currentServerId) {
-            const server = servers.get(currentServerId);
-            if (server) {
-                // Если это был создатель сервера
-                if (server.players.size === 1) {
-                    servers.delete(currentServerId);
-                    publicServers.delete(currentServerId);
-                    console.log(`🛑 Сервер удалён: ${currentServerId}`);
-                    broadcastServerList();
-                } else {
-                    server.players.delete(currentPlayerId);
-                    server.info.players--;
-                    console.log(`👋 Игрок покинул сервер`);
+    console.log('🔌 Соединение закрыто, playerId:', currentPlayerId);
+    
+    if (currentServerId && currentPlayerId) {
+        const server = servers.get(currentServerId);
+        if (server) {
+            // Удаляем игрока
+            server.players.delete(currentPlayerId);
+            server.info.players = server.players.size;
+            
+            console.log(`👋 Игрок ${currentPlayerName} покинул сервер. Осталось: ${server.info.players}`);
+            
+            // Обновляем список игроков
+            const playerList = [];
+            server.players.forEach((p, id) => playerList.push({ id, name: p.name }));
+            
+            // Оповещаем остальных
+            server.players.forEach((p, id) => {
+                if (p.ws.readyState === WebSocket.OPEN) {
+                    p.ws.send(JSON.stringify({
+                        type: 'player_left',
+                        playerId: currentPlayerId,
+                        playerName: currentPlayerName,
+                        playerCount: server.info.players,
+                        players: playerList
+                    }));
                 }
-            }
+            });
+            
+            // Если сервер пуст и это не создатель - можно удалить
+            // (создатель удаляется только при закрытии его соединения)
         }
-    });
+    }
+    
+    // Если это был создатель сервера - удаляем сервер
+    if (currentServerId && servers.has(currentServerId)) {
+        const server = servers.get(currentServerId);
+        // Проверяем, есть ли ещё игроки
+        if (server.players.size === 0) {
+            // Удаляем сервер
+            if (server.info.accessCode) {
+                serversByCode.delete(server.info.accessCode);
+            }
+            servers.delete(currentServerId);
+            publicServers.delete(currentServerId);
+            broadcastServerList();
+            console.log(`🛑 Сервер ${currentServerId} удалён (нет игроков)`);
+        }
+    }
 });
 
 function broadcastServerList() {
